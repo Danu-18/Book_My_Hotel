@@ -12,10 +12,7 @@ This milestone replaces the generic placeholder Stripe test keys with real Strip
 
 ### 1. Backend (`backend/.env`)
 
-| Key | Old Value | New Value |
-|-----|-----------|-----------|
-| `STRIPE_KEY` | `pk_test_TYooMQauvdEDq54NiTphI7jx` | `pk_test_51U4Vk9ATraUhHfYi7znKk...` (Stripe Sandbox Publishable Key) |
-| `STRIPE_SECRET` | `sk_test_TYooMQauvdEDq54NiTphI7jx` | `sk_test_51U4Vk9ATraUhHfYifsD37o...` (Stripe Sandbox Secret Key) |
+
 
 The `STRIPE_SECRET` is used server-side by the Laravel backend (via the Stripe PHP SDK) to:
 - Create PaymentIntents when a reservation is made (`ReservationController@store`)
