@@ -81,7 +81,7 @@ class HotelController extends Controller
     {
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'chain' => ['sometimes', 'string', 'enum:Marriott,Hilton,Hyatt,Four Seasons'],
+            'chain' => ['sometimes', 'string', 'in:Marriott,Hilton,Hyatt,Four Seasons'],
             'location' => ['sometimes', 'string', 'max:255'],
             'city' => ['sometimes', 'string', 'max:255'],
             'country' => ['sometimes', 'string', 'max:255'],

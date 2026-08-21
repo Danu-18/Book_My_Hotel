@@ -78,14 +78,8 @@ class ReservationController extends Controller
         // Check for conflicting reservations
         $conflict = Reservation::where('room_id', $room->id)
             ->where('status', 'confirmed')
-            ->where(function ($q) use ($checkIn, $checkOut) {
-                $q->whereBetween('check_in_date', [$checkIn->toDateString(), $checkOut->toDateString()])
-                    ->orWhereBetween('check_out_date', [$checkIn->toDateString(), $checkOut->toDateString()])
-                    ->orWhere(function ($q2) use ($checkIn, $checkOut) {
-                        $q2->where('check_in_date', '<=', $checkIn->toDateString())
-                            ->where('check_out_date', '>=', $checkOut->toDateString());
-                    });
-            })
+            ->where('check_in_date', '<', $checkOut->toDateString())
+            ->where('check_out_date', '>', $checkIn->toDateString())
             ->exists();
 
         if ($conflict) {
