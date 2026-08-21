@@ -67,6 +67,7 @@ class ReservationController extends Controller
             'check_out_date' => ['required', 'date', 'after:check_in_date'],
             'guests' => ['required', 'integer', 'min:1', 'max:10'],
             'special_requests' => ['nullable', 'string', 'max:1000'],
+            'promo_code' => ['nullable', 'string', 'max:50'],
         ]);
 
         $room = Room::findOrFail($validated['room_id']);
@@ -90,6 +91,22 @@ class ReservationController extends Controller
         }
 
         $totalPrice = $room->price_per_night * $nights;
+
+        // Apply promo code if provided
+        if ($request->filled('promo_code')) {
+            $today = Carbon::today()->toDateString();
+            $promotion = \App\Models\Promotion::where('code', $request->input('promo_code'))
+                ->where('hotel_id', $room->hotel_id)
+                ->where('is_active', true)
+                ->where('start_date', '<=', $today)
+                ->where('end_date', '>=', $today)
+                ->first();
+
+            if ($promotion) {
+                $discount = $totalPrice * ($promotion->discount_percentage / 100);
+                $totalPrice = max(0, $totalPrice - $discount);
+            }
+        }
 
         // Create the reservation as pending
         $reservation = Reservation::create([
@@ -178,15 +195,25 @@ class ReservationController extends Controller
         $reservation->update(['status' => 'cancelled']);
 
         // Refund via Stripe if payment was made
-        if ($reservation->payment && $reservation->payment->status === 'succeeded') {
+        if ($reservation->payment) {
             try {
-                $paymentIntent = PaymentIntent::retrieve($reservation->payment->stripe_payment_intent_id);
-                $paymentIntent->cancel();
+                $paymentIntentId = $reservation->payment->stripe_payment_intent_id;
 
-                $reservation->payment->update(['status' => 'refunded']);
+                if ($reservation->payment->status === 'succeeded') {
+                    // Create refund for succeeded payments
+                    \Stripe\Refund::create(['payment_intent' => $paymentIntentId]);
+                    $reservation->payment->update(['status' => 'refunded']);
+                } else {
+                    // Retrieve PaymentIntent to verify status
+                    $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
+                    if ($paymentIntent->status !== 'succeeded') {
+                        $paymentIntent->cancel();
+                    }
+                    $reservation->payment->update(['status' => 'cancelled']);
+                }
             } catch (\Exception $e) {
-                // Log refund failure but don't block cancellation
-                \Log::error('Stripe refund failed: '.$e->getMessage());
+                // Log refund/cancellation failure but don't block cancellation
+                \Log::error('Stripe refund/cancellation failed: '.$e->getMessage());
             }
         }
 
