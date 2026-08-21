@@ -68,4 +68,12 @@ class Hotel extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    /**
+     * Get the ancillary services for the hotel.
+     */
+    public function ancillaryServices(): HasMany
+    {
+        return $this->hasMany(AncillaryService::class);
+    }
 }

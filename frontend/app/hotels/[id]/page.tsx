@@ -38,9 +38,25 @@ export default function HotelDetailPage() {
     if (hotelId) fetchHotel();
   }, [hotelId]);
 
-  const handleAvailabilitySearch = (e: React.FormEvent) => {
+  const handleAvailabilitySearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowRooms(true);
+    if (!checkIn || !checkOut) return;
+
+    try {
+      const response = await api.get("/rooms", {
+        params: {
+          hotel_id: hotelId,
+          check_in: checkIn,
+          check_out: checkOut,
+          per_page: 100,
+        },
+      });
+      setRooms(response.data.data || []);
+      setShowRooms(true);
+    } catch (error) {
+      console.error("Failed to fetch available rooms:", error);
+      alert("Failed to check room availability. Please try again.");
+    }
   };
 
   if (loading) {

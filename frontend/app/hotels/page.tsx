@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { PaginatedResponse, Hotel } from "@/lib/types";
 
-export default function HotelsPage() {
+function HotelsPageContent() {
   const searchParams = useSearchParams();
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -180,5 +180,17 @@ export default function HotelsPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function HotelsPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex-1 flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </main>
+    }>
+      <HotelsPageContent />
+    </Suspense>
   );
 }
