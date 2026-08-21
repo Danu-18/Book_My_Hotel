@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { Room } from "@/lib/types";
@@ -10,121 +10,7 @@ import { Elements, CardElement, useStripe, useElements } from "@stripe/react-str
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!);
 
-function CheckoutForm({
-  room,
-  checkIn,
-  checkOut,
-  guests,
-  specialRequests,
-  totalPrice,
-  services,
-  promoCode,
-  onSuccess,
-}: {
-  room: Room;
-  checkIn: string;
-  checkOut: string;
-  guests: number;
-  specialRequests: string;
-  totalPrice: number;
-  services: Array<{ id: number; quantity: number }>;
-  promoCode?: string;
-  onSuccess: (reservationId: number) => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    setProcessing(true);
-    setError("");
-
-    try {
-      // Create reservation and get client secret
-      const response = await api.post("/reservations", {
-        room_id: room.id,
-        check_in_date: checkIn,
-        check_out_date: checkOut,
-        guests,
-        special_requests: specialRequests || undefined,
-        promo_code: promoCode || undefined,
-        services: services.length > 0 ? services : undefined,
-      });
-
-      const { client_secret, reservation } = response.data;
-
-      // Confirm payment with Stripe
-      const result = await stripe.confirmCardPayment(client_secret, {
-        payment_method: {
-          card: elements.getElement(CardElement)!,
-        },
-      });
-
-      if (result.error) {
-        setError(result.error.message || "Payment failed.");
-        return;
-      }
-
-      if (result.paymentIntent?.status === "succeeded") {
-        // Confirm the reservation on the backend
-        await api.post(`/reservations/${reservation.id}/confirm`);
-        onSuccess(reservation.id);
-      } else {
-        setError("Payment was not successful. Please try again.");
-      }
-    } catch (err: unknown) {
-      const errorData = err as { response?: { data?: { message?: string } } };
-      setError(errorData.response?.data?.message || "Failed to process booking. Please try again.");
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Card Details</label>
-        <div className="mt-1 p-3 border border-gray-300 rounded-md bg-white">
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: "16px",
-                  color: "#424770",
-                  "::placeholder": { color: "#aab7c4" },
-                },
-                invalid: { color: "#9e2146" },
-              },
-            }}
-          />
-        </div>
-        <p className="mt-2 text-xs text-gray-500">
-          Test Mode: Use card 4242 4242 4242 4242, any future expiry, any CVC.
-        </p>
-      </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-          {error}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={!stripe || processing}
-        className="w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {processing ? "Processing Payment..." : `Pay ${totalPrice.toLocaleString()} AED`}
-      </button>
-    </form>
-  );
-}
-
-export default function BookPage() {
+function BookPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -483,5 +369,131 @@ export default function BookPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+function CheckoutForm({
+  room,
+  checkIn,
+  checkOut,
+  guests,
+  specialRequests,
+  totalPrice,
+  services,
+  promoCode,
+  onSuccess,
+}: {
+  room: Room;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  specialRequests: string;
+  totalPrice: number;
+  services: Array<{ id: number; quantity: number }>;
+  promoCode?: string;
+  onSuccess: (reservationId: number) => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+
+    setProcessing(true);
+    setError("");
+
+    try {
+      // Create reservation and get client secret
+      const response = await api.post("/reservations", {
+        room_id: room.id,
+        check_in_date: checkIn,
+        check_out_date: checkOut,
+        guests,
+        special_requests: specialRequests || undefined,
+        promo_code: promoCode || undefined,
+        services: services.length > 0 ? services : undefined,
+      });
+
+      const { client_secret, reservation } = response.data;
+
+      // Confirm payment with Stripe
+      const result = await stripe.confirmCardPayment(client_secret, {
+        payment_method: {
+          card: elements.getElement(CardElement)!,
+        },
+      });
+
+      if (result.error) {
+        setError(result.error.message || "Payment failed.");
+        return;
+      }
+
+      if (result.paymentIntent?.status === "succeeded") {
+        // Confirm the reservation on the backend
+        await api.post(`/reservations/${reservation.id}/confirm`);
+        onSuccess(reservation.id);
+      } else {
+        setError("Payment was not successful. Please try again.");
+      }
+    } catch (err: unknown) {
+      const errorData = err as { response?: { data?: { message?: string } } };
+      setError(errorData.response?.data?.message || "Failed to process booking. Please try again.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Card Details</label>
+        <div className="mt-1 p-3 border border-gray-300 rounded-md bg-white">
+          <CardElement
+            options={{
+              style: {
+                base: {
+                  fontSize: "16px",
+                  color: "#424770",
+                  "::placeholder": { color: "#aab7c4" },
+                },
+                invalid: { color: "#9e2146" },
+              },
+            }}
+          />
+        </div>
+        <p className="mt-2 text-xs text-gray-500">
+          Test Mode: Use card 4242 4242 4242 4242, any future expiry, any CVC.
+        </p>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={!stripe || processing}
+        className="w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {processing ? "Processing Payment..." : `Pay ${totalPrice.toLocaleString()} AED`}
+      </button>
+    </form>
+  );
+}
+
+export default function BookPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex-1 flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </main>
+    }>
+      <BookPageContent />
+    </Suspense>
   );
 }
