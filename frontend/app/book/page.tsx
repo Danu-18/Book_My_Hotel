@@ -17,6 +17,8 @@ function CheckoutForm({
   guests,
   specialRequests,
   totalPrice,
+  services,
+  promoCode,
   onSuccess,
 }: {
   room: Room;
@@ -25,6 +27,8 @@ function CheckoutForm({
   guests: number;
   specialRequests: string;
   totalPrice: number;
+  services: Array<{ id: number; quantity: number }>;
+  promoCode?: string;
   onSuccess: (reservationId: number) => void;
 }) {
   const stripe = useStripe();
@@ -47,6 +51,8 @@ function CheckoutForm({
         check_out_date: checkOut,
         guests,
         special_requests: specialRequests || undefined,
+        promo_code: promoCode || undefined,
+        services: services.length > 0 ? services : undefined,
       });
 
       const { client_secret, reservation } = response.data;
@@ -133,6 +139,15 @@ export default function BookPage() {
   const [loading, setLoading] = useState(true);
   const [booked, setBooked] = useState<number | null>(null);
 
+  // Ancillary services state
+  const [ancillaryServices, setAncillaryServices] = useState<any[]>([]);
+  const [selectedServices, setSelectedServices] = useState<Record<number, number>>({});
+
+  // Promo code state
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<any | null>(null);
+  const [promoError, setPromoError] = useState("");
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push(`/login?next=/book?room_id=${roomId}&check_in=${checkInParam}&check_out=${checkOutParam}`);
@@ -155,6 +170,21 @@ export default function BookPage() {
       setLoading(false);
     }
   }, [roomId, user, authLoading, router, checkInParam, checkOutParam]);
+
+  // Fetch available ancillary services for the hotel
+  useEffect(() => {
+    if (room) {
+      const fetchServices = async () => {
+        try {
+          const response = await api.get(`/ancillary-services?hotel_id=${room.hotel_id}`);
+          setAncillaryServices(response.data.ancillary_services || []);
+        } catch (error) {
+          console.error("Failed to fetch ancillary services:", error);
+        }
+      };
+      fetchServices();
+    }
+  }, [room]);
 
   if (authLoading || loading) {
     return (
@@ -202,11 +232,41 @@ export default function BookPage() {
     );
   }
 
+  const handleApplyPromo = async () => {
+    setPromoError("");
+    if (!promoCode) return;
+    try {
+      const response = await api.get(`/promotions?hotel_id=${room.hotel_id}`);
+      const list = response.data.promotions || [];
+      const promo = list.find((p: any) => p.code.toUpperCase() === promoCode.toUpperCase());
+      if (promo) {
+        setAppliedPromo(promo);
+      } else {
+        setPromoError("Invalid or expired promo code for this hotel.");
+        setAppliedPromo(null);
+      }
+    } catch (error) {
+      console.error("Failed to check promotions:", error);
+      setPromoError("Failed to validate promo code.");
+    }
+  };
+
   const nights =
     checkInParam && checkOutParam
       ? Math.max(1, (new Date(checkOutParam).getTime() - new Date(checkInParam).getTime()) / 86400000)
       : 1;
-  const totalPrice = parseFloat(room.price_per_night) * nights;
+
+  const roomCost = parseFloat(room.price_per_night) * nights;
+
+  const servicesCost = Object.entries(selectedServices).reduce((sum, [id, qty]) => {
+    const svc = ancillaryServices.find((s) => s.id === Number(id));
+    return sum + (svc ? parseFloat(svc.price) * qty : 0);
+  }, 0);
+
+  const subtotal = roomCost + servicesCost;
+  const discountRate = appliedPromo ? parseFloat(appliedPromo.discount_percentage) / 100 : 0;
+  const discountAmount = subtotal * discountRate;
+  const finalTotal = Math.max(0, subtotal - discountAmount);
 
   return (
     <main className="flex-1 max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full">
@@ -266,22 +326,131 @@ export default function BookPage() {
               <textarea
                 value={specialRequests}
                 onChange={(e) => setSpecialRequests(e.target.value)}
-                rows={3}
+                rows={2}
                 placeholder="Early check-in, airport pickup, anniversary setup..."
                 className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               />
             </div>
 
-            <div className="border-t border-gray-200 pt-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-semibold">
-                  {parseFloat(room.price_per_night).toLocaleString()} × {nights} nights
+            {/* Ancillary Services checklist */}
+            {ancillaryServices.length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Enhance Your Stay</h3>
+                <div className="space-y-3">
+                  {ancillaryServices.map((service) => {
+                    const isSelected = selectedServices[service.id] !== undefined;
+                    const qty = selectedServices[service.id] || 1;
+
+                    return (
+                      <div
+                        key={service.id}
+                        className={`flex items-start justify-between p-3 border rounded-md transition-colors ${
+                          isSelected ? "border-blue-500 bg-blue-50/20" : "border-gray-200 hover:border-blue-300"
+                        }`}
+                      >
+                        <div className="flex items-start">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedServices({ ...selectedServices, [service.id]: 1 });
+                              } else {
+                                const updated = { ...selectedServices };
+                                delete updated[service.id];
+                                setSelectedServices(updated);
+                              }
+                            }}
+                            className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <div className="ml-3">
+                            <p className="text-sm font-semibold text-gray-900">{service.name}</p>
+                            <p className="text-xs text-gray-500">{service.description}</p>
+                            {isSelected && (
+                              <div className="mt-2 flex items-center space-x-2">
+                                <label className="text-xs text-gray-600">Qty:</label>
+                                <select
+                                  value={qty}
+                                  onChange={(e) =>
+                                    setSelectedServices({
+                                      ...selectedServices,
+                                      [service.id]: Number(e.target.value),
+                                    })
+                                  }
+                                  className="px-2 py-0.5 border border-gray-300 rounded text-xs text-gray-900"
+                                >
+                                  {[1, 2, 3, 4, 5, 10].map((n) => (
+                                    <option key={n} value={n}>
+                                      {n}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-sm font-medium text-blue-600">
+                          +{parseFloat(service.price).toLocaleString()} AED
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Promo Code input */}
+            <div className="pt-4 border-t border-gray-200">
+              <label className="block text-sm font-medium text-gray-700">Promo Code</label>
+              <div className="mt-1 flex space-x-2">
+                <input
+                  type="text"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  placeholder="MARRIOTT15"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyPromo}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-md border border-gray-300 transition-colors"
+                >
+                  Apply
+                </button>
+              </div>
+              {appliedPromo && (
+                <p className="mt-1 text-xs text-green-600 font-semibold">
+                  ✓ Promotion applied: -{appliedPromo.discount_percentage}% discount
+                </p>
+              )}
+              {promoError && (
+                <p className="mt-1 text-xs text-red-600 font-semibold">✗ {promoError}</p>
+              )}
+            </div>
+
+            {/* Price breakdown */}
+            <div className="border-t border-gray-200 pt-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Room Subtotal</span>
+                <span className="font-semibold text-gray-900">
+                  {roomCost.toLocaleString()} AED ({parseFloat(room.price_per_night).toLocaleString()} × {nights} nights)
                 </span>
               </div>
-              <div className="mt-2 flex justify-between text-lg font-bold">
+              {servicesCost > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Ancillary Services</span>
+                  <span className="font-semibold text-gray-900">+{servicesCost.toLocaleString()} AED</span>
+                </div>
+              )}
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Discount ({appliedPromo.discount_percentage}%)</span>
+                  <span className="font-semibold">-{discountAmount.toLocaleString()} AED</span>
+                </div>
+              )}
+              <div className="pt-2 border-t border-gray-200 flex justify-between text-lg font-bold">
                 <span className="text-gray-900">Total</span>
-                <span className="text-blue-600">{totalPrice.toLocaleString()} AED</span>
+                <span className="text-blue-600">{finalTotal.toLocaleString()} AED</span>
               </div>
             </div>
           </div>
@@ -301,7 +470,12 @@ export default function BookPage() {
                 checkOut={checkOutParam}
                 guests={guests}
                 specialRequests={specialRequests}
-                totalPrice={totalPrice}
+                totalPrice={finalTotal}
+                services={Object.entries(selectedServices).map(([id, qty]) => ({
+                  id: Number(id),
+                  quantity: qty,
+                }))}
+                promoCode={appliedPromo ? appliedPromo.code : undefined}
                 onSuccess={(id) => setBooked(id)}
               />
             </Elements>

@@ -68,6 +68,9 @@ class ReservationController extends Controller
             'guests' => ['required', 'integer', 'min:1', 'max:10'],
             'special_requests' => ['nullable', 'string', 'max:1000'],
             'promo_code' => ['nullable', 'string', 'max:50'],
+            'services' => ['nullable', 'array'],
+            'services.*.id' => ['required_with:services', 'exists:ancillary_services,id'],
+            'services.*.quantity' => ['required_with:services', 'integer', 'min:1'],
         ]);
 
         $room = Room::findOrFail($validated['room_id']);
@@ -91,6 +94,16 @@ class ReservationController extends Controller
         }
 
         $totalPrice = $room->price_per_night * $nights;
+
+        // Calculate ancillary services cost
+        $ancillaryCost = 0;
+        if ($request->filled('services')) {
+            foreach ($request->input('services') as $s) {
+                $service = \App\Models\AncillaryService::findOrFail($s['id']);
+                $ancillaryCost += $service->price * $s['quantity'];
+            }
+        }
+        $totalPrice += $ancillaryCost;
 
         // Apply promo code if provided
         if ($request->filled('promo_code')) {
@@ -120,6 +133,17 @@ class ReservationController extends Controller
             'special_requests' => $validated['special_requests'] ?? null,
         ]);
 
+        // Attach ancillary services to the reservation
+        if ($request->filled('services')) {
+            foreach ($request->input('services') as $s) {
+                $service = \App\Models\AncillaryService::findOrFail($s['id']);
+                $reservation->ancillaryServices()->attach($service->id, [
+                    'quantity' => $s['quantity'],
+                    'price_at_booking' => $service->price,
+                ]);
+            }
+        }
+
         // Create Stripe Payment Intent
         $paymentIntent = PaymentIntent::create([
             'amount' => (int) round($totalPrice * 100), // Convert to cents
@@ -140,7 +164,7 @@ class ReservationController extends Controller
 
         return response()->json([
             'message' => 'Reservation created. Please complete payment.',
-            'reservation' => $reservation->load(['room.hotel', 'payment']),
+            'reservation' => $reservation->load(['room.hotel', 'payment', 'ancillaryServices']),
             'client_secret' => $paymentIntent->client_secret,
         ], 201);
     }

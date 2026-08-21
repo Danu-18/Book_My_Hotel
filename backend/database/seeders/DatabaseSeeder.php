@@ -139,6 +139,25 @@ class DatabaseSeeder extends Seeder
                 'code' => strtoupper(Str::slug($hotel->chain)).'15',
                 'is_active' => true,
             ]);
+
+            // Create ancillary services
+            $services = [
+                ['name' => 'Breakfast Buffet', 'category' => 'dining', 'price' => 75, 'description' => 'Daily international breakfast buffet.'],
+                ['name' => 'Airport Shuttle Service', 'category' => 'rental', 'price' => 150, 'description' => 'One-way private airport transfer.'],
+                ['name' => 'City Sightseeing Tour', 'category' => 'tour', 'price' => 250, 'description' => 'Guided half-day city tour.'],
+                ['name' => 'Full Body Massage', 'category' => 'spa', 'price' => 350, 'description' => '60-minute therapeutic massage at the luxury spa.'],
+            ];
+
+            foreach ($services as $service) {
+                \App\Models\AncillaryService::create([
+                    'hotel_id' => $hotel->id,
+                    'name' => $service['name'],
+                    'category' => $service['category'],
+                    'price' => $service['price'],
+                    'description' => $service['description'],
+                    'is_active' => true,
+                ]);
+            }
         }
 
         // Create a confirmed reservation for the sample customer
