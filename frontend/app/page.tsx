@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import type { Hotel, Promotion } from "@/lib/types";
 
 export default function Home() {
+  const { user } = useAuth();
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -247,15 +249,25 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold">Ready to Book Your Stay?</h2>
           <p className="mt-4 text-gray-300 max-w-xl mx-auto">
-            Join thousands of satisfied guests. Register now to start booking
-            your next unforgettable stay.
+            {user
+              ? "Browse our wide selection of luxury 5-star hotels and find the perfect room today."
+              : "Join thousands of satisfied guests. Register now to start booking your next unforgettable stay."}
           </p>
-          <Link
-            href="/register"
-            className="mt-6 inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Create Account
-          </Link>
+          {user ? (
+            <Link
+              href="/hotels"
+              className="mt-6 inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Browse Hotels
+            </Link>
+          ) : (
+            <Link
+              href="/register"
+              className="mt-6 inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Create Account
+            </Link>
+          )}
         </div>
       </section>
     </main>
