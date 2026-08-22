@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { Reservation } from "@/lib/types";
@@ -10,109 +10,7 @@ import { Elements, CardElement, useStripe, useElements } from "@stripe/react-str
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!);
 
-function PaymentForm({
-  reservation,
-  onSuccess,
-}: {
-  reservation: Reservation;
-  onSuccess: () => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    setProcessing(true);
-    setError("");
-
-    try {
-      // Get a fresh payment intent client secret by re-creating the payment
-      const response = await api.post(`/reservations/${reservation.id}/confirm`);
-
-      // If the reservation is already confirmed, skip payment
-      if (response.data.reservation?.status === "confirmed") {
-        onSuccess();
-        return;
-      }
-
-      // Fallback: try to resume pending payment using the existing payment intent
-      const { client_secret } = response.data;
-
-      if (!client_secret) {
-        setError("Unable to retrieve payment details. Please try again.");
-        return;
-      }
-
-      const result = await stripe.confirmCardPayment(client_secret, {
-        payment_method: {
-          card: elements.getElement(CardElement)!,
-        },
-      });
-
-      if (result.error) {
-        setError(result.error.message || "Payment failed.");
-        return;
-      }
-
-      if (result.paymentIntent?.status === "succeeded") {
-        await api.post(`/reservations/${reservation.id}/confirm`);
-        onSuccess();
-      } else {
-        setError("Payment was not successful. Please try again.");
-      }
-    } catch (err: unknown) {
-      const errorData = err as { response?: { data?: { message?: string } } };
-      setError(errorData.response?.data?.message || "Failed to process payment. Please try again.");
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Card Details</label>
-        <div className="mt-1 p-3 border border-gray-300 rounded-md bg-white">
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: "16px",
-                  color: "#424770",
-                  "::placeholder": { color: "#aab7c4" },
-                },
-                invalid: { color: "#9e2146" },
-              },
-            }}
-          />
-        </div>
-        <p className="mt-2 text-xs text-gray-500">
-          Test Mode: Use card 4242 4242 4242 4242, any future expiry, any CVC.
-        </p>
-      </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-          {error}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={!stripe || processing}
-        className="w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {processing ? "Processing Payment..." : `Pay ${parseFloat(reservation.total_price).toLocaleString()} AED`}
-      </button>
-    </form>
-  );
-}
-
-export default function PayPage() {
+function PayPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reservationId = searchParams.get("reservation_id");
@@ -262,5 +160,119 @@ export default function PayPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+function PaymentForm({
+  reservation,
+  onSuccess,
+}: {
+  reservation: Reservation;
+  onSuccess: () => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+
+    setProcessing(true);
+    setError("");
+
+    try {
+      // Get a fresh payment intent client secret by re-creating the payment
+      const response = await api.post(`/reservations/${reservation.id}/confirm`);
+
+      // If the reservation is already confirmed, skip payment
+      if (response.data.reservation?.status === "confirmed") {
+        onSuccess();
+        return;
+      }
+
+      // Fallback: try to resume pending payment using the existing payment intent
+      const { client_secret } = response.data;
+
+      if (!client_secret) {
+        setError("Unable to retrieve payment details. Please try again.");
+        return;
+      }
+
+      const result = await stripe.confirmCardPayment(client_secret, {
+        payment_method: {
+          card: elements.getElement(CardElement)!,
+        },
+      });
+
+      if (result.error) {
+        setError(result.error.message || "Payment failed.");
+        return;
+      }
+
+      if (result.paymentIntent?.status === "succeeded") {
+        await api.post(`/reservations/${reservation.id}/confirm`);
+        onSuccess();
+      } else {
+        setError("Payment was not successful. Please try again.");
+      }
+    } catch (err: unknown) {
+      const errorData = err as { response?: { data?: { message?: string } } };
+      setError(errorData.response?.data?.message || "Failed to process payment. Please try again.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Card Details</label>
+        <div className="mt-1 p-3 border border-gray-300 rounded-md bg-white">
+          <CardElement
+            options={{
+              style: {
+                base: {
+                  fontSize: "16px",
+                  color: "#424770",
+                  "::placeholder": { color: "#aab7c4" },
+                },
+                invalid: { color: "#9e2146" },
+              },
+            }}
+          />
+        </div>
+        <p className="mt-2 text-xs text-gray-500">
+          Test Mode: Use card 4242 4242 4242 4242, any future expiry, any CVC.
+        </p>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={!stripe || processing}
+        className="w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {processing ? "Processing Payment..." : `Pay ${parseFloat(reservation.total_price).toLocaleString()} AED`}
+      </button>
+    </form>
+  );
+}
+
+export default function PayPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex-1 flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </main>
+    }>
+      <PayPageContent />
+    </Suspense>
   );
 }

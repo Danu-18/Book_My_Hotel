@@ -19,7 +19,7 @@ class CheckRole
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
-        if ($request->user()->role !== $role) {
+        if ($request->user()->role !== $role && $request->user()->role !== 'admin') {
             return response()->json(['message' => 'Forbidden. You do not have access to this resource.'], 403);
         }
 

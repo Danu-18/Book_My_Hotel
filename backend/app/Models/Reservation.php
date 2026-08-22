@@ -66,4 +66,14 @@ class Reservation extends Model
     {
         return $this->hasOne(Payment::class);
     }
+
+    /**
+     * Get the ancillary services associated with the reservation.
+     */
+    public function ancillaryServices(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(AncillaryService::class)
+            ->withPivot('quantity', 'price_at_booking')
+            ->withTimestamps();
+    }
 }

@@ -48,14 +48,8 @@ class RoomController extends Controller
             $checkOut = Carbon::parse($request->input('check_out'))->toDateString();
 
             $bookedRoomIds = Reservation::where('status', 'confirmed')
-                ->where(function ($q) use ($checkIn, $checkOut) {
-                    $q->whereBetween('check_in_date', [$checkIn, $checkOut])
-                        ->orWhereBetween('check_out_date', [$checkIn, $checkOut])
-                        ->orWhere(function ($q2) use ($checkIn, $checkOut) {
-                            $q2->where('check_in_date', '<=', $checkIn)
-                                ->where('check_out_date', '>=', $checkOut);
-                        });
-                })
+                ->where('check_in_date', '<', $checkOut)
+                ->where('check_out_date', '>', $checkIn)
                 ->pluck('room_id');
 
             $query->whereNotIn('id', $bookedRoomIds);

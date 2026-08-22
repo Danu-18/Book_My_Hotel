@@ -8,6 +8,7 @@ use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\AncillaryServiceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -41,6 +42,9 @@ Route::get('/reviews', [ReviewController::class, 'index']);
 // Public contact form
 Route::post('/contact', [ContactController::class, 'store']);
 
+// Public ancillary services
+Route::get('/ancillary-services', [AncillaryServiceController::class, 'index']);
+
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth
@@ -72,6 +76,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // View reservations by date
         Route::get('/staff/reservations/by-date', [ReservationController::class, 'byDate']);
+
+        // Ancillary services management
+        Route::post('/ancillary-services', [AncillaryServiceController::class, 'store']);
     });
 
     // Admin routes
