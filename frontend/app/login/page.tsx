@@ -18,9 +18,15 @@ function LoginPageContent() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.push("/");
+      if (user.role === "admin") {
+        router.push("/admin");
+      } else if (user.role === "staff") {
+        router.push("/staff");
+      } else {
+        router.push(next);
+      }
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, next]);
 
   if (authLoading || user) {
     return (
@@ -37,7 +43,6 @@ function LoginPageContent() {
     try {
       await login(email, password);
       toast.success("Logged in successfully!");
-      router.push(next);
     } catch (err: unknown) {
       const errorData = err as { response?: { data?: { message?: string } } };
       toast.error(errorData.response?.data?.message || "Login failed. Please try again.");
