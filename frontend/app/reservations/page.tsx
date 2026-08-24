@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import type { PaginatedResponse, Reservation } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "react-toastify";
 
 export default function ReservationsPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function ReservationsPage() {
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
+  const [reservationToCancel, setReservationToCancel] = useState<number | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -45,14 +47,14 @@ export default function ReservationsPage() {
   }, [page, statusFilter, user]);
 
   const handleCancel = async (id: number) => {
-    const confirmed = window.confirm("Are you sure you want to cancel this reservation?");
-    if (!confirmed) return;
-
     try {
       await api.post(`/reservations/${id}/cancel`);
+      toast.success("Reservation cancelled successfully.");
       fetchReservations();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to cancel reservation:", error);
+      const errorData = error as { response?: { data?: { message?: string } } };
+      toast.error(errorData.response?.data?.message || "Failed to cancel reservation.");
     }
   };
 
@@ -157,7 +159,7 @@ export default function ReservationsPage() {
                   <div className="mt-1 flex items-center justify-start sm:justify-end gap-2 text-xs">
                     {reservation.status === "confirmed" && (
                       <button
-                        onClick={() => handleCancel(reservation.id)}
+                        onClick={() => setReservationToCancel(reservation.id)}
                         className="text-destructive hover:underline font-semibold cursor-pointer"
                       >
                         Cancel Booking
@@ -199,6 +201,35 @@ export default function ReservationsPage() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Cancellation Confirmation Modal */}
+      {reservationToCancel !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-6 max-w-md w-full mx-4 space-y-4">
+            <h3 className="text-lg font-bold text-foreground font-display">Cancel Reservation?</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Are you sure you want to cancel this reservation? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setReservationToCancel(null)}
+                className="px-4 py-2 bg-muted text-muted-foreground hover:bg-border font-semibold rounded-lg text-sm transition-colors cursor-pointer"
+              >
+                Keep Booking
+              </button>
+              <button
+                onClick={() => {
+                  handleCancel(reservationToCancel);
+                  setReservationToCancel(null);
+                }}
+                className="px-4 py-2 bg-destructive text-destructive-foreground hover:opacity-90 font-semibold rounded-lg text-sm transition-opacity cursor-pointer"
+              >
+                Yes, Cancel Booking
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>

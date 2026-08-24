@@ -60,7 +60,7 @@
 *   **Stripe Payment & Refunds:** Secured card captures via Stripe.js. Validated refunds via Stripe Refund creation class (`\Stripe\Refund::create()`) on succeeded payment intentions.
 *   **Admin Panel UIs:** Interactive KPI statistics dashboard, all reservations list, and custom creations/modifications pages built under `/admin/hotels` to resolve 404s.
 *   **Authorization Alignment:** Middleware `CheckRole.php` updated to allow `admin` users to pass specific route role blocks (inheriting staff controls).
-*   **Standard Tailwind UI Facelift:** Integrated pre-built cards, layouts, and standard Tailwind CSS / shadcn properties across all primary pages (Home, Details, Checkout, Staff, Admin) to ensure clean compatibility, integrated `react-toastify` on auth pages, resolved the `401` login redirect loop reload bug, and added dynamic date constraints with auto-correction to availability search forms.
+*   **Standard Tailwind UI Facelift:** Integrated pre-built cards, layouts, and standard Tailwind CSS / shadcn properties across all primary pages (Home, Details, Checkout, Staff, Admin) to ensure clean compatibility, integrated `react-toastify` on auth pages, resolved the `401` login redirect loop reload bug, added dynamic date constraints with auto-correction to availability search forms, and replaced the browser `window.confirm` with a custom React modal on the reservations page.
 
 ### Recommended Production Optimizations (For future iterations)
 *   **Stripe Webhook Listener:** Build an endpoint to verify PaymentIntent transactions asynchronously to prevent unconfirmed successes when users drop off mid-checkout.
