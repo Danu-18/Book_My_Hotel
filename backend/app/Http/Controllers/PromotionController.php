@@ -18,8 +18,15 @@ class PromotionController extends Controller
 
         // Enforce strict data isolation for staff
         $user = $request->user('sanctum');
-        if ($user && $user->role === 'staff') {
-            $query->where('hotel_id', $user->hotel_id);
+        if ($user && ($user->role === 'staff' || $user->role === 'admin')) {
+            if ($user->role === 'staff') {
+                $query->where('hotel_id', $user->hotel_id);
+            } else {
+                // Admin can filter by hotel if query param is passed
+                if ($request->has('hotel_id')) {
+                    $query->where('hotel_id', $request->input('hotel_id'));
+                }
+            }
         } else {
             $query->where('is_active', true);
 
@@ -132,6 +139,58 @@ class PromotionController extends Controller
 
         return response()->json([
             'message' => 'Promotion deleted successfully.',
+        ]);
+    }
+
+    /**
+     * Validate a promo code for a given hotel (Public/Customer).
+     */
+    public function validateCode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'code' => ['required', 'string'],
+            'hotel_id' => ['required', 'exists:hotels,id'],
+        ]);
+
+        $code = $request->input('code');
+        $hotelId = $request->input('hotel_id');
+
+        $promotion = Promotion::where('code', $code)
+            ->where('hotel_id', $hotelId)
+            ->first();
+
+        if (!$promotion) {
+            return response()->json([
+                'status' => 'invalid',
+                'message' => 'Invalid promo code.'
+            ]);
+        }
+
+        if (!$promotion->is_active) {
+            return response()->json([
+                'status' => 'inactive',
+                'message' => 'Promo code is inactive.'
+            ]);
+        }
+
+        $today = Carbon::today()->toDateString();
+        if ($promotion->start_date > $today) {
+            return response()->json([
+                'status' => 'not_started',
+                'message' => 'Promo code is not active yet.'
+            ]);
+        }
+
+        if ($promotion->end_date < $today) {
+            return response()->json([
+                'status' => 'expired',
+                'message' => 'Promo code has expired.'
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'valid',
+            'promotion' => $promotion
         ]);
     }
 }

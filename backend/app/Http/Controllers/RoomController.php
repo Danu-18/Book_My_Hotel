@@ -48,17 +48,20 @@ class RoomController extends Controller
             $query->where('capacity', '>=', $request->input('capacity'));
         }
 
-        // Availability check: exclude rooms with conflicting reservations
+        // Availability check: only show rooms with remaining inventory
         if ($request->has('check_in') && $request->has('check_out')) {
             $checkIn = Carbon::parse($request->input('check_in'))->toDateString();
             $checkOut = Carbon::parse($request->input('check_out'))->toDateString();
 
-            $bookedRoomIds = Reservation::where('status', 'confirmed')
-                ->where('check_in_date', '<', $checkOut)
-                ->where('check_out_date', '>', $checkIn)
-                ->pluck('room_id');
-
-            $query->whereNotIn('id', $bookedRoomIds);
+            $query->where(function ($q) use ($checkIn, $checkOut) {
+                $q->whereRaw('available_rooms > (
+                    select count(*) from reservations 
+                    where reservations.room_id = rooms.id 
+                    and reservations.status in (\'confirmed\', \'pending\')
+                    and reservations.check_in_date < ?
+                    and reservations.check_out_date > ?
+                )', [$checkOut, $checkIn]);
+            });
         }
 
         $rooms = $query->paginate($request->input('per_page', 12));

@@ -15,7 +15,12 @@ export default function StaffDashboard() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"rooms" | "reservations" | "promotions">("rooms");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [filterDate, setFilterDate] = useState("");
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [activeTab]);
 
   // Room form state
   const [roomForm, setRoomForm] = useState({
@@ -56,7 +61,7 @@ export default function StaffDashboard() {
   }
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== "staff")) {
+    if (!authLoading && (!user || (user.role !== "staff" && user.role !== "admin"))) {
       router.push("/login?next=/staff");
       return;
     }
@@ -93,13 +98,13 @@ export default function StaffDashboard() {
   };
 
   useEffect(() => {
-    if (user?.role === "staff") {
+    if (user?.role === "staff" || user?.role === "admin") {
       fetchData();
     }
   }, [user]);
 
   useEffect(() => {
-    if (activeTab === "reservations" && user?.role === "staff") {
+    if (activeTab === "reservations" && (user?.role === "staff" || user?.role === "admin")) {
       fetchReservationsByDate();
     }
   }, [activeTab, filterDate, user]);
@@ -246,19 +251,60 @@ export default function StaffDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50 w-full text-slate-800">
+    <div className="flex flex-col md:flex-row min-h-screen bg-background w-full text-foreground">
+      {/* Mobile Top Header */}
+      <div className="flex md:hidden items-center justify-between px-6 py-4 bg-card border-b border-border/60 sticky top-0 z-30 w-full shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="font-display text-lg font-bold tracking-tight text-foreground">
+            BookMyHotel<span className="text-muted-foreground font-sans font-normal text-xs">.com</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary capitalize tracking-wider">
+            {activeTab}
+          </span>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            type="button"
+            className="inline-flex items-center justify-center p-2 rounded-md text-foreground hover:bg-muted focus:outline-none cursor-pointer"
+          >
+            {isMobileMenuOpen ? (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col justify-between p-6 shrink-0 border-r border-slate-800">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-card flex flex-col justify-between p-6 shrink-0 border-r border-border/60 transform transition-transform duration-300 md:translate-x-0 md:static md:h-screen ${
+          isMobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        }`}
+      >
         <div className="space-y-8">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <span className="font-display text-xl font-bold tracking-tight text-white">
-              BookMyHotel<span className="text-slate-400 font-sans font-normal text-sm">.com</span>
+            <span className="font-display text-xl font-bold tracking-tight text-foreground">
+              BookMyHotel<span className="text-muted-foreground font-sans font-normal text-sm">.com</span>
             </span>
           </div>
 
           <div className="space-y-1">
-            <div className="px-3 py-2 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="px-3 py-2 text-[0.65rem] font-bold text-muted-foreground uppercase tracking-wider">
               Management
             </div>
             {/* Tabs */}
@@ -269,8 +315,8 @@ export default function StaffDashboard() {
                   onClick={() => setActiveTab(tab)}
                   className={`w-full flex items-center px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors cursor-pointer text-left ${
                     activeTab === tab
-                      ? "bg-amber-500 text-slate-950 shadow-md"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -281,14 +327,15 @@ export default function StaffDashboard() {
         </div>
 
         {/* Footer & Logout */}
-        <div className="space-y-4 border-t border-slate-800 pt-6">
+        <div className="space-y-4 border-t border-border/60 pt-6">
           <div className="px-3">
-            <p className="text-xs text-slate-400 font-medium">Signed in as:</p>
-            <p className="text-sm font-bold text-white truncate">{user?.name}</p>
+            <p className="text-xs text-muted-foreground font-medium">Signed in as:</p>
+            <p className="text-sm font-bold text-foreground truncate">{user?.name}</p>
+            <p className="text-xs text-primary font-semibold mt-0.5">Hotel Staff</p>
           </div>
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center px-4 py-2.5 bg-slate-800 text-red-400 font-semibold rounded-lg border border-slate-700 hover:bg-slate-700 hover:text-red-300 transition-colors cursor-pointer text-sm"
+            className="w-full flex items-center justify-center px-4 py-2.5 bg-muted text-destructive hover:bg-destructive/10 font-semibold rounded-lg border border-border/40 transition-colors cursor-pointer text-sm"
           >
             Logout
           </button>
@@ -296,10 +343,10 @@ export default function StaffDashboard() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-8 overflow-y-auto flex flex-col bg-slate-50">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto flex flex-col bg-background">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 font-display">Hotel Staff Dashboard</h1>
-          <p className="mt-2 text-sm text-slate-500">Update room availability, prices, and manage promotions</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground font-display">Hotel Staff Dashboard</h1>
+          <p className="mt-2 text-xs sm:text-sm text-muted-foreground">Update room availability, prices, and manage promotions</p>
         </header>
 
       {/* Rooms Tab */}

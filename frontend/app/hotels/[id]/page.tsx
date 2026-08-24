@@ -291,7 +291,7 @@ export default function HotelDetailPage() {
                           <span className="text-xs text-muted-foreground">/ night</span>
                         </div>
                         <p className="mt-2 text-xs text-muted-foreground">
-                          Sleeps {room.capacity} · {room.total_rooms} rooms available
+                          Sleeps {room.capacity} · {room.available_rooms} rooms available
                         </p>
                         {room.amenities && room.amenities.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">

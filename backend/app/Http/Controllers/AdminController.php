@@ -92,6 +92,14 @@ class AdminController extends Controller
             $query->where('status', $request->input('status'));
         }
 
+        // Filter by hotel
+        if ($request->has('hotel_id')) {
+            $hotelId = $request->input('hotel_id');
+            $query->whereHas('room', function ($q) use ($hotelId) {
+                $q->where('hotel_id', $hotelId);
+            });
+        }
+
         $reservations = $query->orderBy('created_at', 'desc')->paginate($request->input('per_page', 15));
 
         return response()->json($reservations);

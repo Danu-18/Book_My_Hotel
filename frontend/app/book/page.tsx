@@ -7,6 +7,7 @@ import type { Room } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { toast } from "react-toastify";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!);
 
@@ -122,18 +123,31 @@ function BookPageContent() {
     setPromoError("");
     if (!promoCode) return;
     try {
-      const response = await api.get(`/promotions?hotel_id=${room.hotel_id}`);
-      const list = response.data.promotions || [];
-      const promo = list.find((p: any) => p.code.toUpperCase() === promoCode.toUpperCase());
-      if (promo) {
-        setAppliedPromo(promo);
-      } else {
-        setPromoError("Invalid or expired promo code for this hotel.");
+      const response = await api.get(`/promotions/validate?code=${encodeURIComponent(promoCode)}&hotel_id=${room.hotel_id}`);
+      const status = response.data.status;
+      const message = response.data.message;
+
+      if (status === "valid") {
+        setAppliedPromo(response.data.promotion);
+        toast.success("Promo code applied successfully!");
+      } else if (status === "expired") {
+        setPromoError("promo code expired");
+        toast.error("promo code expired");
+        setAppliedPromo(null);
+      } else if (status === "invalid") {
+        setPromoError("invalid promo code");
+        toast.error("invalid promo code");
+        setAppliedPromo(null);
+      } else if (status === "inactive" || status === "not_started") {
+        setPromoError(message || "Promo code is not available.");
+        toast.error(message || "Promo code is not available.");
         setAppliedPromo(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to check promotions:", error);
       setPromoError("Failed to validate promo code.");
+      toast.error("Failed to validate promo code.");
+      setAppliedPromo(null);
     }
   };
 
