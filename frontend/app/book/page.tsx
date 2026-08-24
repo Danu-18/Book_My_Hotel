@@ -74,26 +74,26 @@ function BookPageContent() {
 
   if (authLoading || loading) {
     return (
-      <main className="flex-1 flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <main className="flex-1 flex items-center justify-center py-20 bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </main>
     );
   }
 
   if (booked) {
     return (
-      <main className="flex-1 flex items-center justify-center px-4 py-20 bg-gray-50">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-            <span className="text-3xl">✓</span>
+      <main className="flex-1 flex items-center justify-center px-4 py-20 bg-background text-foreground">
+        <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto text-primary text-3xl font-bold">
+            ✓
           </div>
-          <h1 className="mt-6 text-2xl font-bold text-gray-900">Booking Confirmed!</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="mt-6 text-2xl font-bold text-foreground font-display">Booking Confirmed!</h1>
+          <p className="mt-2 text-sm text-foreground/80">
             Your reservation #{booked} has been confirmed. We've sent the details to your account.
           </p>
           <button
             onClick={() => router.push("/reservations")}
-            className="mt-6 w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
+            className="mt-6 w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90"
           >
             View My Bookings
           </button>
@@ -104,12 +104,12 @@ function BookPageContent() {
 
   if (!room) {
     return (
-      <main className="flex-1 flex items-center justify-center py-20 bg-gray-50">
+      <main className="flex-1 flex items-center justify-center py-20 bg-background text-foreground">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Room not found</h1>
+          <h1 className="text-2xl font-bold text-foreground font-display">Room not found</h1>
           <button
             onClick={() => router.push("/hotels")}
-            className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+            className="mt-4 text-primary hover:underline font-medium"
           >
             ← Browse hotels
           </button>
@@ -155,73 +155,81 @@ function BookPageContent() {
   const finalTotal = Math.max(0, subtotal - discountAmount);
 
   return (
-    <main className="flex-1 max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full">
-      <h1 className="text-3xl font-bold text-gray-900">Complete Your Booking</h1>
+    <main className="flex-1 max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full bg-background text-foreground">
+      <h1 className="text-3xl font-bold text-foreground font-display">Complete Your Booking</h1>
 
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Booking Summary */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900">Booking Details</h2>
-          <div className="mt-4 space-y-4">
+        <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50 space-y-6">
+          <h2 className="text-xl font-bold text-foreground font-display">Booking Details</h2>
+          <div className="space-y-4">
             <div>
-              <p className="text-sm text-gray-500">Room Type</p>
-              <p className="font-semibold text-gray-900">{room.room_type}</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Room Type</p>
+              <p className="font-semibold text-foreground">{room.room_type}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500">Check In</p>
-                <p className="font-semibold text-gray-900">{new Date(checkInParam).toLocaleDateString()}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Check In</p>
+                <p className="font-semibold text-foreground">{new Date(checkInParam).toLocaleDateString()}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Check Out</p>
-                <p className="font-semibold text-gray-900">{new Date(checkOutParam).toLocaleDateString()}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Check Out</p>
+                <p className="font-semibold text-foreground">{new Date(checkOutParam).toLocaleDateString()}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500">Nights</p>
-                <p className="font-semibold text-gray-900">{nights}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Nights</p>
+                <p className="font-semibold text-foreground">{nights}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Rate</p>
-                <p className="font-semibold text-gray-900">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Rate</p>
+                <p className="font-semibold text-foreground">
                   {parseFloat(room.price_per_night).toLocaleString()} AED / night
                 </p>
               </div>
             </div>
 
             {/* Guests */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Guests</label>
-              <select
-                value={guests}
-                onChange={(e) => setGuests(Number(e.target.value))}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              >
-                {Array.from({ length: Math.min(6, room.capacity) }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>
-                    {n} guest{n > 1 ? "s" : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <label className="block min-w-0">
+              <span className="text-[0.65rem] font-medium uppercase tracking-widest text-muted-foreground">
+                Guests
+              </span>
+              <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                <select
+                  value={guests}
+                  onChange={(e) => setGuests(Number(e.target.value))}
+                  className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                >
+                  {Array.from({ length: Math.min(6, room.capacity) }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>
+                      {n} guest{n > 1 ? "s" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </label>
 
             {/* Special requests */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Special Requests (optional)</label>
-              <textarea
-                value={specialRequests}
-                onChange={(e) => setSpecialRequests(e.target.value)}
-                rows={2}
-                placeholder="Early check-in, airport pickup, anniversary setup..."
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              />
-            </div>
+            <label className="block min-w-0">
+              <span className="text-[0.65rem] font-medium uppercase tracking-widest text-muted-foreground">
+                Special Requests (optional)
+              </span>
+              <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                <textarea
+                  value={specialRequests}
+                  onChange={(e) => setSpecialRequests(e.target.value)}
+                  rows={2}
+                  placeholder="Early check-in, airport pickup, anniversary setup..."
+                  className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                />
+              </div>
+            </label>
 
             {/* Ancillary Services checklist */}
             {ancillaryServices.length > 0 && (
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">Enhance Your Stay</h3>
+              <div className="pt-4 border-t border-border/60">
+                <h3 className="text-sm font-medium text-foreground font-display mb-2">Enhance Your Stay</h3>
                 <div className="space-y-3">
                   {ancillaryServices.map((service) => {
                     const isSelected = selectedServices[service.id] !== undefined;
@@ -230,8 +238,8 @@ function BookPageContent() {
                     return (
                       <div
                         key={service.id}
-                        className={`flex items-start justify-between p-3 border rounded-md transition-colors ${
-                          isSelected ? "border-blue-500 bg-blue-50/20" : "border-gray-200 hover:border-blue-300"
+                        className={`flex items-start justify-between p-3 border rounded-xl transition-colors ${
+                          isSelected ? "border-primary bg-muted/30" : "border-border hover:border-primary/50"
                         }`}
                       >
                         <div className="flex items-start">
@@ -247,14 +255,14 @@ function BookPageContent() {
                                 setSelectedServices(updated);
                               }
                             }}
-                            className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="mt-1 h-4 w-4 text-primary border-border rounded focus:ring-primary"
                           />
                           <div className="ml-3">
-                            <p className="text-sm font-semibold text-gray-900">{service.name}</p>
-                            <p className="text-xs text-gray-500">{service.description}</p>
+                            <p className="text-sm font-semibold text-foreground">{service.name}</p>
+                            <p className="text-xs text-muted-foreground">{service.description}</p>
                             {isSelected && (
                               <div className="mt-2 flex items-center space-x-2">
-                                <label className="text-xs text-gray-600">Qty:</label>
+                                <label className="text-xs text-muted-foreground font-medium">Qty:</label>
                                 <select
                                   value={qty}
                                   onChange={(e) =>
@@ -263,7 +271,7 @@ function BookPageContent() {
                                       [service.id]: Number(e.target.value),
                                     })
                                   }
-                                  className="px-2 py-0.5 border border-gray-300 rounded text-xs text-gray-900"
+                                  className="px-2 py-0.5 border border-border rounded bg-background text-xs text-foreground"
                                 >
                                   {[1, 2, 3, 4, 5, 10].map((n) => (
                                     <option key={n} value={n}>
@@ -275,7 +283,7 @@ function BookPageContent() {
                             )}
                           </div>
                         </div>
-                        <span className="text-sm font-medium text-blue-600">
+                        <span className="text-sm font-medium text-primary font-sans">
                           +{parseFloat(service.price).toLocaleString()} AED
                         </span>
                       </div>
@@ -286,46 +294,54 @@ function BookPageContent() {
             )}
 
             {/* Promo Code input */}
-            <div className="pt-4 border-t border-gray-200">
-              <label className="block text-sm font-medium text-gray-700">Promo Code</label>
-              <div className="mt-1 flex space-x-2">
-                <input
-                  type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  placeholder="MARRIOTT15"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-                <button
-                  type="button"
-                  onClick={handleApplyPromo}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-md border border-gray-300 transition-colors"
-                >
-                  Apply
-                </button>
-              </div>
+            <div className="pt-4 border-t border-border/60">
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-medium uppercase tracking-widest text-muted-foreground">
+                  Promo Code
+                </span>
+                <div className="mt-1 flex space-x-2">
+                  <div className="flex-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      placeholder="MARRIOTT15"
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold uppercase"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleApplyPromo}
+                    className="px-6 py-2 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </label>
               {appliedPromo && (
-                <p className="mt-1 text-xs text-green-600 font-semibold">
+                <div className="mt-2 bg-muted border border-border text-foreground px-3 py-2 rounded-lg text-xs font-semibold">
                   ✓ Promotion applied: -{appliedPromo.discount_percentage}% discount
-                </p>
+                </div>
               )}
               {promoError && (
-                <p className="mt-1 text-xs text-red-600 font-semibold">✗ {promoError}</p>
+                <div className="mt-2 bg-destructive/10 border border-destructive/20 text-destructive px-3 py-2 rounded-lg text-xs font-semibold">
+                  ✗ {promoError}
+                </div>
               )}
             </div>
 
             {/* Price breakdown */}
-            <div className="border-t border-gray-200 pt-4 space-y-2">
+            <div className="border-t border-border/60 pt-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Room Subtotal</span>
-                <span className="font-semibold text-gray-900">
+                <span className="text-muted-foreground">Room Subtotal</span>
+                <span className="font-semibold text-foreground">
                   {roomCost.toLocaleString()} AED ({parseFloat(room.price_per_night).toLocaleString()} × {nights} nights)
                 </span>
               </div>
               {servicesCost > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Ancillary Services</span>
-                  <span className="font-semibold text-gray-900">+{servicesCost.toLocaleString()} AED</span>
+                  <span className="text-muted-foreground">Ancillary Services</span>
+                  <span className="font-semibold text-foreground">+{servicesCost.toLocaleString()} AED</span>
                 </div>
               )}
               {discountAmount > 0 && (
@@ -334,18 +350,18 @@ function BookPageContent() {
                   <span className="font-semibold">-{discountAmount.toLocaleString()} AED</span>
                 </div>
               )}
-              <div className="pt-2 border-t border-gray-200 flex justify-between text-lg font-bold">
-                <span className="text-gray-900">Total</span>
-                <span className="text-blue-600">{finalTotal.toLocaleString()} AED</span>
+              <div className="pt-2 border-t border-border/60 flex justify-between text-lg font-bold">
+                <span className="text-foreground font-display">Total</span>
+                <span className="text-primary font-sans">{finalTotal.toLocaleString()} AED</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Payment */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900">Secure Payment</h2>
-          <p className="mt-2 text-sm text-gray-500">
+        <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50 self-start space-y-6">
+          <h2 className="text-xl font-bold text-foreground font-display">Secure Payment</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
             Payment is processed securely via Stripe. We never store your card details.
           </p>
           <div className="mt-6">
@@ -448,15 +464,15 @@ function CheckoutForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Card Details</label>
-        <div className="mt-1 p-3 border border-gray-300 rounded-md bg-white">
+      <div className="space-y-2">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-widest">Card Details</label>
+        <div className="p-3.5 border border-border rounded-lg bg-background">
           <CardElement
             options={{
               style: {
                 base: {
                   fontSize: "16px",
-                  color: "#424770",
+                  color: "#380560",
                   "::placeholder": { color: "#aab7c4" },
                 },
                 invalid: { color: "#9e2146" },
@@ -464,13 +480,13 @@ function CheckoutForm({
             }}
           />
         </div>
-        <p className="mt-2 text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Test Mode: Use card 4242 4242 4242 4242, any future expiry, any CVC.
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
           {error}
         </div>
       )}
@@ -478,7 +494,7 @@ function CheckoutForm({
       <button
         type="submit"
         disabled={!stripe || processing}
-        className="w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
         {processing ? "Processing Payment..." : `Pay ${totalPrice.toLocaleString()} AED`}
       </button>
@@ -489,8 +505,8 @@ function CheckoutForm({
 export default function BookPage() {
   return (
     <Suspense fallback={
-      <main className="flex-1 flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <main className="flex-1 flex items-center justify-center py-20 bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </main>
     }>
       <BookPageContent />

@@ -4,6 +4,9 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ToastProvider from "@/components/ToastProvider";
+
+import LayoutWrapper from "@/components/LayoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,9 +36,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-gray-50">
         <AuthProvider>
-          <Navbar />
-          <div className="flex-1 flex flex-col">{children}</div>
-          <Footer />
+          <ToastProvider />
+          <LayoutWrapper>{children}</LayoutWrapper>
         </AuthProvider>
       </body>
     </html>

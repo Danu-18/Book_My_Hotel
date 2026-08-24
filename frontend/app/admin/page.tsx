@@ -85,8 +85,8 @@ export default function AdminDashboard() {
 
   if (authLoading || loading) {
     return (
-      <main className="flex-1 flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <main className="flex-1 flex items-center justify-center py-20 bg-background text-foreground">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </main>
     );
   }
@@ -99,20 +99,20 @@ export default function AdminDashboard() {
   };
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full">
-      <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-      <p className="mt-2 text-gray-600">Manage hotels, view reservations, and monitor performance</p>
+    <main className="flex-1 max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full bg-background text-foreground">
+      <h1 className="text-3xl font-bold text-foreground font-display">Admin Dashboard</h1>
+      <p className="mt-2 text-sm text-muted-foreground">Manage hotels, view reservations, and monitor performance</p>
 
       {/* Tabs */}
-      <div className="mt-6 flex space-x-2 border-b border-gray-200">
+      <div className="mt-6 flex space-x-2 border-b border-border/60">
         {(["analytics", "reservations", "hotels"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
               activeTab === tab
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -122,77 +122,81 @@ export default function AdminDashboard() {
 
       {/* Analytics Tab */}
       {activeTab === "analytics" && analytics && (
-        <div className="mt-8">
+        <div className="mt-8 space-y-6">
           {/* Date filter */}
-          <form onSubmit={handleDateFilter} className="bg-white rounded-lg shadow-sm p-4 flex flex-wrap gap-4 items-end">
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Start Date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">End Date</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              />
-            </div>
+          <form onSubmit={handleDateFilter} className="bg-card rounded-2xl shadow-xl p-4 ring-1 ring-border/50 flex flex-wrap gap-4 items-end">
+            <label className="block min-w-0">
+              <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">Start Date</span>
+              <div className="mt-1 rounded-lg bg-background px-3 py-2 ring-1 ring-border">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                />
+              </div>
+            </label>
+            <label className="block min-w-0">
+              <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">End Date</span>
+              <div className="mt-1 rounded-lg bg-background px-3 py-2 ring-1 ring-border">
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                />
+              </div>
+            </label>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+              className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 cursor-pointer"
             >
               Apply Filter
             </button>
           </form>
 
           {/* KPI Cards */}
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <p className="text-sm text-gray-500">Room Nights</p>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{analytics.summary.room_nights}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Room Nights</p>
+              <p className="mt-2 text-3xl font-bold text-foreground font-display">{analytics.summary.room_nights}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <p className="text-sm text-gray-500">Room Revenue</p>
-              <p className="mt-2 text-3xl font-bold text-green-600">
-                {analytics.summary.room_revenue.toLocaleString()} AED
+            <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Room Revenue</p>
+              <p className="mt-2 text-3xl font-bold text-primary font-sans">
+                {analytics.summary.room_revenue.toLocaleString()} <span className="text-sm font-sans font-medium text-muted-foreground">AED</span>
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <p className="text-sm text-gray-500">Average Daily Rate</p>
-              <p className="mt-2 text-3xl font-bold text-blue-600">
-                {analytics.summary.average_daily_rate.toLocaleString()} AED
+            <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Average Daily Rate</p>
+              <p className="mt-2 text-3xl font-bold text-foreground font-sans">
+                {analytics.summary.average_daily_rate.toLocaleString()} <span className="text-sm font-sans font-medium text-muted-foreground">AED</span>
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <p className="text-sm text-gray-500">Total Reservations</p>
-              <p className="mt-2 text-3xl font-bold text-indigo-600">{analytics.summary.total_reservations}</p>
+            <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Total Reservations</p>
+              <p className="mt-2 text-3xl font-bold text-foreground font-display">{analytics.summary.total_reservations}</p>
             </div>
           </div>
 
           {/* Per-hotel breakdown */}
-          <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-900">Performance by Hotel</h2>
-            <div className="mt-4 overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
+          <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50 flex flex-col">
+            <h2 className="text-xl font-bold text-foreground font-display mb-4">Performance by Hotel</h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-border/60">
+                <thead className="bg-muted/40">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Hotel</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Chain</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Room Nights</th>
+                    <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Hotel</th>
+                    <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Chain</th>
+                    <th className="px-4 py-3.5 text-right text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Room Nights</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border/40 text-sm">
                   {analytics.by_hotel.map((hotel) => (
                     <tr key={hotel.hotel}>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{hotel.hotel}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{hotel.chain}</td>
-                      <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">{hotel.room_nights}</td>
+                      <td className="px-4 py-3 font-semibold text-foreground">{hotel.hotel}</td>
+                      <td className="px-4 py-3 text-foreground/80">{hotel.chain}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-foreground font-sans">{hotel.room_nights}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -204,37 +208,37 @@ export default function AdminDashboard() {
 
       {/* Reservations Tab */}
       {activeTab === "reservations" && (
-        <div className="mt-8 bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">All Reservations</h2>
+        <div className="mt-8 bg-card rounded-2xl shadow-xl overflow-hidden ring-1 ring-border/50 flex flex-col">
+          <div className="p-6 border-b border-border/60">
+            <h2 className="text-xl font-bold text-foreground font-display">All Reservations</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-border/60">
+              <thead className="bg-muted/40">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Guest</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Hotel</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Dates</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                  <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">ID</th>
+                  <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Guest</th>
+                  <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Hotel</th>
+                  <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Dates</th>
+                  <th className="px-4 py-3.5 text-right text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Total</th>
+                  <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border/40 text-sm">
                 {reservations.map((reservation) => (
                   <tr key={reservation.id}>
-                    <td className="px-4 py-3 text-sm text-gray-900">#{reservation.id}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{reservation.user?.name || "N/A"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{reservation.room?.hotel?.name || "N/A"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
+                    <td className="px-4 py-3 text-foreground font-semibold">#{reservation.id}</td>
+                    <td className="px-4 py-3 text-foreground/80">{reservation.user?.name || "N/A"}</td>
+                    <td className="px-4 py-3 text-foreground/80">{reservation.room?.hotel?.name || "N/A"}</td>
+                    <td className="px-4 py-3 text-foreground/80">
                       {new Date(reservation.check_in_date).toLocaleDateString()} →{" "}
                       {new Date(reservation.check_out_date).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                    <td className="px-4 py-3 text-right font-bold text-foreground font-sans">
                       {parseFloat(reservation.total_price).toLocaleString()} AED
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[reservation.status]}`}>
+                      <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${statusColors[reservation.status]}`}>
                         {reservation.status}
                       </span>
                     </td>
@@ -248,42 +252,43 @@ export default function AdminDashboard() {
 
       {/* Hotels Tab */}
       {activeTab === "hotels" && (
-        <div className="mt-8">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900">Manage Hotels</h2>
+        <div className="mt-8 space-y-6">
+          <div className="flex justify-between items-center gap-4">
+            <h2 className="text-xl font-bold text-foreground font-display">Manage Hotels</h2>
             <a
               href="/admin/hotels/new"
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+              className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90"
             >
               + Add Hotel
             </a>
           </div>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {hotels.map((hotel) => (
-              <div key={hotel.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div key={hotel.id} className="overflow-hidden rounded-2xl bg-card shadow-xl ring-1 ring-border/50 hover:shadow-2xl transition-all flex flex-col">
                 <div className="h-40 bg-gray-200 relative">
                   {hotel.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={hotel.image_url} alt={hotel.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-blue-100">
-                      <span className="text-blue-500 font-semibold">{hotel.chain}</span>
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                      <span className="text-primary font-semibold font-display text-sm">{hotel.chain}</span>
                     </div>
                   )}
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900">{hotel.name}</h3>
-                  <p className="text-sm text-gray-500">{hotel.city}, {hotel.country}</p>
-                  <div className="mt-3 flex space-x-2">
+                <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-semibold text-foreground text-base font-display">{hotel.name}</h3>
+                    <p className="text-xs text-muted-foreground">{hotel.city}, {hotel.country}</p>
+                  </div>
+                  <div className="mt-4 flex space-x-2">
                     <a
                       href={`/admin/hotels/${hotel.id}/edit`}
-                      className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors"
+                      className="px-3 py-1.5 text-xs font-semibold bg-muted text-muted-foreground rounded-md hover:opacity-95 transition-opacity"
                     >
                       Edit
                     </a>
                     <button
                       onClick={() => handleDeleteHotel(hotel.id)}
-                      className="px-3 py-1.5 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-colors"
+                      className="px-3 py-1.5 text-xs font-semibold bg-destructive/10 text-destructive rounded-md hover:bg-destructive/20 transition-colors cursor-pointer"
                     >
                       Delete
                     </button>

@@ -4,6 +4,7 @@ export interface User {
   email: string;
   role: "customer" | "staff" | "admin";
   phone: string | null;
+  hotel_id?: number | null;
   created_at: string;
 }
 
