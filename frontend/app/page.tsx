@@ -17,6 +17,21 @@ export default function Home() {
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(2);
 
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  const minCheckoutDate = checkIn
+    ? (() => {
+        const d = new Date(checkIn + "T00:00:00");
+        d.setDate(d.getDate() + 1);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      })()
+    : (() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      })();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -91,7 +106,21 @@ export default function Home() {
                 <input
                   type="date"
                   value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
+                  min={todayStr}
+                  onChange={(e) => {
+                    const newCheckIn = e.target.value;
+                    setCheckIn(newCheckIn);
+                    if (checkOut) {
+                      const ciDate = new Date(newCheckIn + "T00:00:00");
+                      const coDate = new Date(checkOut + "T00:00:00");
+                      if (ciDate >= coDate) {
+                        const nextDay = new Date(ciDate);
+                        nextDay.setDate(nextDay.getDate() + 1);
+                        const nextDayStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, "0")}-${String(nextDay.getDate()).padStart(2, "0")}`;
+                        setCheckOut(nextDayStr);
+                      }
+                    }
+                  }}
                   className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                 />
               </Field>
@@ -99,6 +128,7 @@ export default function Home() {
                 <input
                   type="date"
                   value={checkOut}
+                  min={minCheckoutDate}
                   onChange={(e) => setCheckOut(e.target.value)}
                   className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                 />

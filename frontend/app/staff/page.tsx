@@ -3,23 +3,22 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import type { PaginatedResponse, Room, Reservation, Hotel, Promotion } from "@/lib/types";
+import type { PaginatedResponse, Room, Reservation, Promotion } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "react-toastify";
 
 export default function StaffDashboard() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [hotels, setHotels] = useState<Hotel[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"rooms" | "reservations" | "promotions">("rooms");
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().split("T")[0]);
+  const [filterDate, setFilterDate] = useState("");
 
   // Room form state
   const [roomForm, setRoomForm] = useState({
-    hotel_id: "",
     room_type: "",
     room_number: "",
     capacity: 2,
@@ -30,7 +29,6 @@ export default function StaffDashboard() {
 
   // Promotion form state
   const [promoForm, setPromoForm] = useState({
-    hotel_id: "",
     title: "",
     description: "",
     discount_percentage: "",
@@ -38,6 +36,24 @@ export default function StaffDashboard() {
     end_date: "",
     code: "",
   });
+
+  const [editingPromoId, setEditingPromoId] = useState<number | null>(null);
+  const [reservationToCancel, setReservationToCancel] = useState<number | null>(null);
+  const [promoToDelete, setPromoToDelete] = useState<number | null>(null);
+
+  // Dynamic date calculations for promotions
+  const today = new Date().toISOString().split("T")[0];
+
+  let minEndDate = "";
+  if (promoForm.start_date) {
+    const nextDay = new Date(promoForm.start_date);
+    nextDay.setDate(nextDay.getDate() + 1);
+    minEndDate = nextDay.toISOString().split("T")[0];
+  } else {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    minEndDate = tomorrow.toISOString().split("T")[0];
+  }
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "staff")) {
@@ -49,13 +65,11 @@ export default function StaffDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [roomsRes, hotelsRes, promosRes] = await Promise.all([
+      const [roomsRes, promosRes] = await Promise.all([
         api.get<PaginatedResponse<Room>>("/rooms?per_page=50"),
-        api.get<PaginatedResponse<Hotel>>("/hotels?per_page=50"),
         api.get("/promotions"),
       ]);
       setRooms(roomsRes.data.data);
-      setHotels(hotelsRes.data.data);
       setPromotions(promosRes.data.promotions || []);
     } catch (error) {
       console.error("Failed to fetch staff data:", error);
@@ -66,8 +80,13 @@ export default function StaffDashboard() {
 
   const fetchReservationsByDate = async () => {
     try {
-      const response = await api.get(`/staff/reservations/by-date?date=${filterDate}`);
-      setReservations(response.data.reservations);
+      if (!filterDate) {
+        const response = await api.get("/reservations?per_page=100");
+        setReservations(response.data.data || []);
+      } else {
+        const response = await api.get(`/staff/reservations/by-date?date=${filterDate}`);
+        setReservations(response.data.reservations || []);
+      }
     } catch (error) {
       console.error("Failed to fetch reservations:", error);
     }
@@ -90,15 +109,14 @@ export default function StaffDashboard() {
     try {
       await api.post("/rooms", {
         ...roomForm,
-        hotel_id: Number(roomForm.hotel_id),
+        hotel_id: Number(user?.hotel_id),
         capacity: Number(roomForm.capacity),
         price_per_night: Number(roomForm.price_per_night),
         total_rooms: Number(roomForm.total_rooms),
         available_rooms: Number(roomForm.available_rooms),
       });
-      alert("Room added successfully!");
+      toast.success("Room added successfully!");
       setRoomForm({
-        hotel_id: "",
         room_type: "",
         room_number: "",
         capacity: 2,
@@ -109,21 +127,30 @@ export default function StaffDashboard() {
       fetchData();
     } catch (error) {
       console.error("Failed to add room:", error);
-      alert("Failed to add room");
+      toast.error("Failed to add room");
     }
   };
 
   const handlePromoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post("/promotions", {
-        ...promoForm,
-        hotel_id: Number(promoForm.hotel_id),
-        discount_percentage: Number(promoForm.discount_percentage),
-      });
-      alert("Promotion created successfully!");
+      if (editingPromoId !== null) {
+        await api.put(`/promotions/${editingPromoId}`, {
+          ...promoForm,
+          hotel_id: Number(user?.hotel_id),
+          discount_percentage: Number(promoForm.discount_percentage),
+        });
+        toast.success("Promotion updated successfully!");
+        setEditingPromoId(null);
+      } else {
+        await api.post("/promotions", {
+          ...promoForm,
+          hotel_id: Number(user?.hotel_id),
+          discount_percentage: Number(promoForm.discount_percentage),
+        });
+        toast.success("Promotion created successfully!");
+      }
       setPromoForm({
-        hotel_id: "",
         title: "",
         description: "",
         discount_percentage: "",
@@ -133,8 +160,65 @@ export default function StaffDashboard() {
       });
       fetchData();
     } catch (error) {
-      console.error("Failed to create promotion:", error);
-      alert("Failed to create promotion");
+      console.error("Failed to save promotion:", error);
+      toast.error("Failed to save promotion");
+    }
+  };
+
+  const handleStartDateChange = (val: string) => {
+    let updatedEnd = promoForm.end_date;
+    if (val) {
+      const selectedStart = new Date(val);
+      const nextDay = new Date(selectedStart);
+      nextDay.setDate(nextDay.getDate() + 1);
+      const nextDayStr = nextDay.toISOString().split("T")[0];
+
+      if (promoForm.end_date && new Date(promoForm.end_date) <= selectedStart) {
+        updatedEnd = nextDayStr;
+      }
+    }
+    setPromoForm({ ...promoForm, start_date: val, end_date: updatedEnd });
+  };
+
+  const handleCancelReservation = (id: number) => {
+    setReservationToCancel(id);
+  };
+
+  const executeCancelReservation = async (id: number) => {
+    try {
+      await api.post(`/reservations/${id}/cancel`);
+      toast.success("Reservation cancelled and payment refunded successfully!");
+      fetchReservationsByDate();
+    } catch (error) {
+      console.error("Failed to cancel reservation:", error);
+      toast.error("Failed to cancel reservation");
+    }
+  };
+
+  const handleEditPromo = (promo: Promotion) => {
+    setEditingPromoId(promo.id);
+    setPromoForm({
+      title: promo.title,
+      description: promo.description || "",
+      discount_percentage: String(promo.discount_percentage),
+      start_date: promo.start_date,
+      end_date: promo.end_date,
+      code: promo.code,
+    });
+  };
+
+  const handleDeletePromo = (id: number) => {
+    setPromoToDelete(id);
+  };
+
+  const executeDeletePromo = async (id: number) => {
+    try {
+      await api.delete(`/promotions/${id}`);
+      toast.success("Promotion deleted successfully!");
+      fetchData();
+    } catch (error) {
+      console.error("Failed to delete promotion:", error);
+      toast.error("Failed to delete promotion");
     }
   };
 
@@ -145,10 +229,11 @@ export default function StaffDashboard() {
         available_rooms: available,
         is_active: active,
       });
+      toast.success("Room inventory updated!");
       fetchData();
     } catch (error) {
       console.error("Failed to update room:", error);
-      alert("Failed to update room");
+      toast.error("Failed to update room");
     }
   };
 
@@ -191,25 +276,6 @@ export default function StaffDashboard() {
             <form onSubmit={handleRoomSubmit} className="space-y-4">
               <label className="block min-w-0">
                 <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
-                  Hotel
-                </span>
-                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
-                  <select
-                    value={roomForm.hotel_id}
-                    onChange={(e) => setRoomForm({ ...roomForm, hotel_id: e.target.value })}
-                    required
-                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
-                  >
-                    <option value="">Select Hotel</option>
-                    {hotels.map((hotel) => (
-                      <option key={hotel.id} value={hotel.id}>{hotel.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </label>
-
-              <label className="block min-w-0">
-                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
                   Room Type
                 </span>
                 <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
@@ -218,8 +284,7 @@ export default function StaffDashboard() {
                     value={roomForm.room_type}
                     onChange={(e) => setRoomForm({ ...roomForm, room_type: e.target.value })}
                     required
-                    placeholder="Deluxe Room"
-                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                   />
                 </div>
               </label>
@@ -235,7 +300,7 @@ export default function StaffDashboard() {
                       value={roomForm.room_number}
                       onChange={(e) => setRoomForm({ ...roomForm, room_number: e.target.value })}
                       required
-                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                     />
                   </div>
                 </label>
@@ -251,7 +316,7 @@ export default function StaffDashboard() {
                       min={1}
                       max={10}
                       required
-                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                     />
                   </div>
                 </label>
@@ -270,7 +335,7 @@ export default function StaffDashboard() {
                       min={0}
                       step="0.01"
                       required
-                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                     />
                   </div>
                 </label>
@@ -285,7 +350,7 @@ export default function StaffDashboard() {
                       onChange={(e) => setRoomForm({ ...roomForm, available_rooms: Number(e.target.value) })}
                       min={0}
                       required
-                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                     />
                   </div>
                 </label>
@@ -310,7 +375,6 @@ export default function StaffDashboard() {
                 <thead className="bg-muted/40">
                   <tr>
                     <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Room</th>
-                    <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Hotel</th>
                     <th className="px-4 py-3.5 text-right text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Price</th>
                     <th className="px-4 py-3.5 text-right text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Available</th>
                     <th className="px-4 py-3.5 text-center text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Status</th>
@@ -324,7 +388,6 @@ export default function StaffDashboard() {
                         <div className="font-semibold text-foreground">{room.room_type}</div>
                         <div className="text-xs text-muted-foreground">#{room.room_number}</div>
                       </td>
-                      <td className="px-4 py-3 text-foreground/80">{room.hotel?.name || "N/A"}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="inline-flex items-center gap-1 bg-background px-2 py-1 rounded-md border border-border">
                           <input
@@ -399,37 +462,74 @@ export default function StaffDashboard() {
           </div>
 
           <div className="bg-card rounded-2xl shadow-xl overflow-hidden ring-1 ring-border/50">
-            <div className="p-6 border-b border-border/60">
+            <div className="p-6 border-b border-border/60 flex justify-between items-center flex-wrap gap-4">
               <h2 className="text-xl font-bold text-foreground font-display">
-                Reservations for {new Date(filterDate).toLocaleDateString()}
+                {filterDate ? `Reservations for ${new Date(filterDate + "T00:00:00").toLocaleDateString()}` : "All Reservations"}
               </h2>
+              {filterDate && (
+                <button
+                  onClick={() => setFilterDate("")}
+                  className="text-xs text-primary hover:underline font-semibold cursor-pointer"
+                >
+                  Clear Date Filter
+                </button>
+              )}
             </div>
             {reservations.length === 0 ? (
-              <div className="p-10 text-center text-xs text-muted-foreground">No reservations for this date</div>
+              <div className="p-10 text-center text-xs text-muted-foreground">
+                {filterDate ? "No reservations for this date" : "No reservations found"}
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-border/60">
                   <thead className="bg-muted/40">
                     <tr>
                       <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Guest</th>
-                      <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Hotel</th>
                       <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Room</th>
                       <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Dates</th>
+                      <th className="px-4 py-3.5 text-center text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Status</th>
                       <th className="px-4 py-3.5 text-right text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Total</th>
+                      <th className="px-4 py-3.5 text-center text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40 text-sm">
                     {reservations.map((reservation) => (
                       <tr key={reservation.id}>
                         <td className="px-4 py-3 font-semibold text-foreground">{reservation.user?.name}</td>
-                        <td className="px-4 py-3 text-foreground/80">{reservation.room?.hotel?.name}</td>
                         <td className="px-4 py-3 text-foreground/80">{reservation.room?.room_type}</td>
                         <td className="px-4 py-3 text-foreground/80">
                           {new Date(reservation.check_in_date).toLocaleDateString()} →{" "}
                           {new Date(reservation.check_out_date).toLocaleDateString()}
                         </td>
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={`px-2.5 py-0.5 text-xs font-semibold rounded-full capitalize ${
+                              reservation.status === "confirmed"
+                                ? "bg-green-100 text-green-800"
+                                : reservation.status === "pending"
+                                ? "bg-amber-100 text-amber-800"
+                                : reservation.status === "cancelled"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {reservation.status}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-right font-bold text-primary font-sans">
                           {parseFloat(reservation.total_price).toLocaleString()} AED
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {reservation.status !== "cancelled" ? (
+                            <button
+                              onClick={() => handleCancelReservation(reservation.id)}
+                              className="text-xs text-red-600 hover:text-red-700 font-semibold cursor-pointer"
+                            >
+                              Cancel Booking
+                            </button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -446,27 +546,10 @@ export default function StaffDashboard() {
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Create Promotion Form */}
           <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50 self-start space-y-6">
-            <h2 className="text-xl font-bold text-foreground font-display">Create Promotion</h2>
+            <h2 className="text-xl font-bold text-foreground font-display">
+              {editingPromoId !== null ? "Edit Promotion" : "Create Promotion"}
+            </h2>
             <form onSubmit={handlePromoSubmit} className="space-y-4">
-              <label className="block min-w-0">
-                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
-                  Hotel
-                </span>
-                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
-                  <select
-                    value={promoForm.hotel_id}
-                    onChange={(e) => setPromoForm({ ...promoForm, hotel_id: e.target.value })}
-                    required
-                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
-                  >
-                    <option value="">Select Hotel</option>
-                    {hotels.map((hotel) => (
-                      <option key={hotel.id} value={hotel.id}>{hotel.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </label>
-
               <label className="block min-w-0">
                 <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
                   Title
@@ -477,8 +560,7 @@ export default function StaffDashboard() {
                     value={promoForm.title}
                     onChange={(e) => setPromoForm({ ...promoForm, title: e.target.value })}
                     required
-                    placeholder="Summer Special"
-                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                   />
                 </div>
               </label>
@@ -492,8 +574,7 @@ export default function StaffDashboard() {
                     value={promoForm.description}
                     onChange={(e) => setPromoForm({ ...promoForm, description: e.target.value })}
                     rows={2}
-                    placeholder="Describe discount details..."
-                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                   />
                 </div>
               </label>
@@ -510,7 +591,7 @@ export default function StaffDashboard() {
                     min={0}
                     max={100}
                     required
-                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                   />
                 </div>
               </label>
@@ -524,9 +605,10 @@ export default function StaffDashboard() {
                     <input
                       type="date"
                       value={promoForm.start_date}
-                      onChange={(e) => setPromoForm({ ...promoForm, start_date: e.target.value })}
+                      onChange={(e) => handleStartDateChange(e.target.value)}
+                      min={today}
                       required
-                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                     />
                   </div>
                 </label>
@@ -539,8 +621,9 @@ export default function StaffDashboard() {
                       type="date"
                       value={promoForm.end_date}
                       onChange={(e) => setPromoForm({ ...promoForm, end_date: e.target.value })}
+                      min={minEndDate}
                       required
-                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                     />
                   </div>
                 </label>
@@ -555,18 +638,37 @@ export default function StaffDashboard() {
                     type="text"
                     value={promoForm.code}
                     onChange={(e) => setPromoForm({ ...promoForm, code: e.target.value })}
-                    placeholder="SUMMER15"
                     className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground uppercase font-semibold"
                   />
                 </div>
               </label>
 
-              <button
-                type="submit"
-                className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 cursor-pointer"
-              >
-                Create Promotion
-              </button>
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 cursor-pointer"
+                >
+                  {editingPromoId !== null ? "Update" : "Create"} Promotion
+                </button>
+                {editingPromoId !== null && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingPromoId(null);
+                      setPromoForm({
+                        title: "",
+                        description: "",
+                        discount_percentage: "",
+                        start_date: "",
+                        end_date: "",
+                        code: "",
+                      });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
@@ -579,7 +681,6 @@ export default function StaffDashboard() {
                   <div className="flex justify-between items-start gap-4">
                     <div>
                       <h3 className="font-semibold text-foreground text-base font-display">{promo.title}</h3>
-                      <p className="text-xs text-muted-foreground">{promo.hotel?.name}</p>
                     </div>
                     <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shrink-0">
                       -{promo.discount_percentage}%
@@ -593,9 +694,24 @@ export default function StaffDashboard() {
                       {new Date(promo.start_date).toLocaleDateString()} →{" "}
                       {new Date(promo.end_date).toLocaleDateString()}
                     </span>
-                    <span>
-                      Code: <strong className="font-mono text-primary">{promo.code}</strong>
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span>
+                        Code: <strong className="font-mono text-primary">{promo.code}</strong>
+                      </span>
+                      <span className="text-muted-foreground/30">|</span>
+                      <button
+                        onClick={() => handleEditPromo(promo)}
+                        className="text-amber-600 hover:text-amber-700 font-semibold cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeletePromo(promo.id)}
+                        className="text-red-600 hover:text-red-700 font-semibold cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -604,6 +720,66 @@ export default function StaffDashboard() {
                   No active promotions
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation Confirmation Modal */}
+      {reservationToCancel !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-6 max-w-md w-full mx-4 space-y-4 text-left">
+            <h3 className="text-lg font-bold text-foreground font-display">Cancel Reservation?</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Are you sure you want to cancel this reservation? The Stripe payment will be refunded.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setReservationToCancel(null)}
+                className="px-4 py-2 bg-muted text-muted-foreground hover:bg-border font-semibold rounded-lg text-sm transition-colors cursor-pointer"
+              >
+                No, Keep Booking
+              </button>
+              <button
+                onClick={() => {
+                  const id = reservationToCancel;
+                  setReservationToCancel(null);
+                  executeCancelReservation(id);
+                }}
+                className="px-4 py-2 bg-red-600 text-white hover:opacity-90 font-semibold rounded-lg text-sm transition-opacity cursor-pointer shadow-md"
+              >
+                Yes, Cancel Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Promotion Delete Confirmation Modal */}
+      {promoToDelete !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-6 max-w-md w-full mx-4 space-y-4 text-left">
+            <h3 className="text-lg font-bold text-foreground font-display">Delete Promotion?</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Are you sure you want to delete this promotion? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setPromoToDelete(null)}
+                className="px-4 py-2 bg-muted text-muted-foreground hover:bg-border font-semibold rounded-lg text-sm transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const id = promoToDelete;
+                  setPromoToDelete(null);
+                  executeDeletePromo(id);
+                }}
+                className="px-4 py-2 bg-red-600 text-white hover:opacity-90 font-semibold rounded-lg text-sm transition-opacity cursor-pointer shadow-md"
+              >
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>

@@ -84,7 +84,6 @@ export default function ContactPage() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
-                      placeholder="John Smith"
                       className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
                     />
                   </div>

@@ -26,6 +26,7 @@ class User extends Authenticatable
         'password',
         'role',
         'phone',
+        'hotel_id',
     ];
 
     /**
@@ -73,5 +74,13 @@ class User extends Authenticatable
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Get the hotel assigned to the staff user.
+     */
+    public function hotel(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Hotel::class);
     }
 }
