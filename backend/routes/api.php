@@ -34,6 +34,7 @@ Route::get('/rooms/{room}', [RoomController::class, 'show']);
 
 // Public promotions
 Route::get('/promotions', [PromotionController::class, 'index']);
+Route::get('/promotions/validate', [PromotionController::class, 'validateCode']);
 Route::get('/promotions/{promotion}', [PromotionController::class, 'show']);
 
 // Public reviews
