@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 
 export default function StaffDashboard() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -246,26 +246,61 @@ export default function StaffDashboard() {
   }
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full bg-background text-foreground">
-      <h1 className="text-3xl font-bold text-foreground font-display">Hotel Staff Dashboard</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Update room availability, prices, and manage promotions</p>
+    <div className="flex min-h-screen bg-slate-50 w-full text-slate-800">
+      {/* Sidebar */}
+      <aside className="w-64 bg-slate-900 text-white flex flex-col justify-between p-6 shrink-0 border-r border-slate-800">
+        <div className="space-y-8">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <span className="font-display text-xl font-bold tracking-tight text-white">
+              BookMyHotel<span className="text-slate-400 font-sans font-normal text-sm">.com</span>
+            </span>
+          </div>
 
-      {/* Tabs */}
-      <div className="mt-6 flex space-x-2 border-b border-border/60">
-        {(["rooms", "reservations", "promotions"] as const).map((tab) => (
+          <div className="space-y-1">
+            <div className="px-3 py-2 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">
+              Management
+            </div>
+            {/* Tabs */}
+            <nav className="space-y-1">
+              {(["rooms", "reservations", "promotions"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`w-full flex items-center px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors cursor-pointer text-left ${
+                    activeTab === tab
+                      ? "bg-amber-500 text-slate-950 shadow-md"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        {/* Footer & Logout */}
+        <div className="space-y-4 border-t border-slate-800 pt-6">
+          <div className="px-3">
+            <p className="text-xs text-slate-400 font-medium">Signed in as:</p>
+            <p className="text-sm font-bold text-white truncate">{user?.name}</p>
+          </div>
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
-              activeTab === tab
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+            onClick={logout}
+            className="w-full flex items-center justify-center px-4 py-2.5 bg-slate-800 text-red-400 font-semibold rounded-lg border border-slate-700 hover:bg-slate-700 hover:text-red-300 transition-colors cursor-pointer text-sm"
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            Logout
           </button>
-        ))}
-      </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 p-8 overflow-y-auto flex flex-col bg-slate-50">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 font-display">Hotel Staff Dashboard</h1>
+          <p className="mt-2 text-sm text-slate-500">Update room availability, prices, and manage promotions</p>
+        </header>
 
       {/* Rooms Tab */}
       {activeTab === "rooms" && (
@@ -784,6 +819,7 @@ export default function StaffDashboard() {
           </div>
         </div>
       )}
-    </main>
+      </main>
+    </div>
   );
 }
