@@ -20,32 +20,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create admin user
-        $admin = User::create([
-            'name' => 'System Admin',
-            'email' => 'admin@bookmyhotel.com',
-            'password' => 'password123',
-            'role' => 'admin',
-            'phone' => '+971500000001',
-        ]);
-
-        // Create hotel staff user
-        $staff = User::create([
-            'name' => 'Hotel Manager',
-            'email' => 'staff@bookmyhotel.com',
-            'password' => 'password123',
-            'role' => 'staff',
-            'phone' => '+971500000002',
-        ]);
-
-        // Create a sample customer
-        $customer = User::create([
-            'email' => 'customer@bookmyhotel.com',
-            'password' => 'password123',
-            'role' => 'customer',
-            'phone' => '+971500000003',
-        ]);
-
         $hotelData = [
             [
                 'name' => 'Marriott Downtown Dubai',
@@ -101,8 +75,10 @@ class DatabaseSeeder extends Seeder
             ],
         ];
 
+        $hotels = [];
         foreach ($hotelData as $data) {
             $hotel = Hotel::create($data);
+            $hotels[] = $hotel;
 
             // Create rooms for each hotel
             $roomTypes = [
@@ -158,6 +134,71 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+
+        // Create admin user
+        $admin = User::create([
+            'name' => 'System Admin',
+            'email' => 'admin@bookmyhotel.com',
+            'password' => 'password123',
+            'role' => 'admin',
+            'phone' => '+971500000001',
+        ]);
+
+        // Create 4 Staff users for the 4 hotels
+        User::create([
+            'name' => 'Marriott Manager',
+            'email' => 'marriott@staff.com',
+            'password' => 'password123',
+            'role' => 'staff',
+            'phone' => '+971500000010',
+            'hotel_id' => $hotels[0]->id,
+        ]);
+
+        User::create([
+            'name' => 'Hilton Manager',
+            'email' => 'hilton@staff.com',
+            'password' => 'password123',
+            'role' => 'staff',
+            'phone' => '+971500000011',
+            'hotel_id' => $hotels[1]->id,
+        ]);
+
+        User::create([
+            'name' => 'Hyatt Manager',
+            'email' => 'hyatt@staff.com',
+            'password' => 'password123',
+            'role' => 'staff',
+            'phone' => '+971500000012',
+            'hotel_id' => $hotels[2]->id,
+        ]);
+
+        User::create([
+            'name' => 'Four Seasons Manager',
+            'email' => 'fourseasons@staff.com',
+            'password' => 'password123',
+            'role' => 'staff',
+            'phone' => '+971500000013',
+            'hotel_id' => $hotels[3]->id,
+        ]);
+
+        // Also keep legacy staff for backward compatibility
+        User::create([
+            'name' => 'Hotel Manager',
+            'email' => 'staff@bookmyhotel.com',
+            'password' => 'password123',
+            'role' => 'staff',
+            'phone' => '+971500000002',
+            'hotel_id' => $hotels[0]->id,
+        ]);
+
+        // Create a sample customer
+        $customer = User::create([
+            'name' => 'John Customer',
+            'email' => 'customer@bookmyhotel.com',
+            'password' => 'password123',
+            'role' => 'customer',
+            'phone' => '+971500000003',
+        ]);
 
         // Create a confirmed reservation for the sample customer
         $room = Room::first();

@@ -17,9 +17,15 @@ class RoomController extends Controller
     {
         $query = Room::query()->with('hotel')->where('is_active', true);
 
-        // Filter by hotel
-        if ($request->has('hotel_id')) {
-            $query->where('hotel_id', $request->input('hotel_id'));
+        // Enforce strict data isolation for staff
+        $user = $request->user('sanctum');
+        if ($user && $user->role === 'staff') {
+            $query->where('hotel_id', $user->hotel_id);
+        } else {
+            // Filter by hotel
+            if ($request->has('hotel_id')) {
+                $query->where('hotel_id', $request->input('hotel_id'));
+            }
         }
 
         // Filter by room type
@@ -65,8 +71,7 @@ class RoomController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'hotel_id' => ['required', 'exists:hotels,id'],
+        $rules = [
             'room_type' => ['required', 'string', 'max:100'],
             'room_number' => ['required', 'string', 'max:50', 'unique:rooms'],
             'capacity' => ['required', 'integer', 'min:1', 'max:20'],
@@ -76,7 +81,17 @@ class RoomController extends Controller
             'amenities' => ['nullable', 'array'],
             'image_url' => ['nullable', 'string'],
             'is_active' => ['boolean'],
-        ]);
+        ];
+
+        if ($request->user()->role === 'admin') {
+            $rules['hotel_id'] = ['required', 'exists:hotels,id'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if ($request->user()->role === 'staff') {
+            $validated['hotel_id'] = $request->user()->hotel_id;
+        }
 
         $room = Room::create($validated);
 
@@ -103,8 +118,11 @@ class RoomController extends Controller
      */
     public function update(Request $request, Room $room): JsonResponse
     {
-        $validated = $request->validate([
-            'hotel_id' => ['sometimes', 'exists:hotels,id'],
+        if ($request->user()->role === 'staff' && $room->hotel_id !== $request->user()->hotel_id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $rules = [
             'room_type' => ['sometimes', 'string', 'max:100'],
             'room_number' => ['sometimes', 'string', 'max:50', 'unique:rooms,room_number,'.$room->id],
             'capacity' => ['sometimes', 'integer', 'min:1', 'max:20'],
@@ -114,7 +132,17 @@ class RoomController extends Controller
             'amenities' => ['nullable', 'array'],
             'image_url' => ['nullable', 'string'],
             'is_active' => ['boolean'],
-        ]);
+        ];
+
+        if ($request->user()->role === 'admin') {
+            $rules['hotel_id'] = ['sometimes', 'exists:hotels,id'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if ($request->user()->role === 'staff') {
+            $validated['hotel_id'] = $request->user()->hotel_id;
+        }
 
         $room->update($validated);
 
@@ -125,10 +153,14 @@ class RoomController extends Controller
     }
 
     /**
-     * Remove the specified room (Admin only).
+     * Remove the specified room (Admin only / Staff bound to hotel).
      */
-    public function destroy(Room $room): JsonResponse
+    public function destroy(Request $request, Room $room): JsonResponse
     {
+        if ($request->user()->role === 'staff' && $room->hotel_id !== $request->user()->hotel_id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
         $room->delete();
 
         return response()->json([

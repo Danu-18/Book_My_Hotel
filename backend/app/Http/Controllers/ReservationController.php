@@ -19,12 +19,19 @@ class ReservationController extends Controller
     }
 
     /**
-     * Display a listing of reservations for the authenticated user.
+     * Display a listing of reservations for the authenticated user / staff hotel.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Reservation::with(['room.hotel', 'payment'])
-            ->where('user_id', $request->user()->id);
+        $query = Reservation::with(['room.hotel', 'payment', 'user']);
+
+        if ($request->user()->role === 'staff') {
+            $query->whereHas('room', function ($q) use ($request) {
+                $q->where('hotel_id', $request->user()->hotel_id);
+            });
+        } else {
+            $query->where('user_id', $request->user()->id);
+        }
 
         if ($request->has('status')) {
             $query->where('status', $request->input('status'));
@@ -46,12 +53,19 @@ class ReservationController extends Controller
 
         $date = Carbon::parse($request->input('date'))->toDateString();
 
-        $reservations = Reservation::with(['user', 'room.hotel'])
+        $query = Reservation::with(['user', 'room.hotel'])
             ->where('check_in_date', '<=', $date)
             ->where('check_out_date', '>', $date)
             ->where('status', 'confirmed')
-            ->orderBy('check_in_date')
-            ->get();
+            ->orderBy('check_in_date');
+
+        if ($request->user() && $request->user()->role === 'staff') {
+            $query->whereHas('room', function ($q) use ($request) {
+                $q->where('hotel_id', $request->user()->hotel_id);
+            });
+        }
+
+        $reservations = $query->get();
 
         return response()->json(['reservations' => $reservations]);
     }
@@ -74,6 +88,10 @@ class ReservationController extends Controller
         ]);
 
         $room = Room::findOrFail($validated['room_id']);
+
+        if ($request->user()->role === 'staff' && $room->hotel_id !== $request->user()->hotel_id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
 
         $checkIn = Carbon::parse($validated['check_in_date']);
         $checkOut = Carbon::parse($validated['check_out_date']);
@@ -179,6 +197,13 @@ class ReservationController extends Controller
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
+        if ($request->user()->role === 'staff') {
+            $room = $reservation->room;
+            if ($room && $room->hotel_id !== $request->user()->hotel_id) {
+                return response()->json(['message' => 'Forbidden.'], 403);
+            }
+        }
+
         return response()->json([
             'reservation' => $reservation->load(['room.hotel', 'payment', 'user']),
         ]);
@@ -189,6 +214,13 @@ class ReservationController extends Controller
      */
     public function update(Request $request, Reservation $reservation): JsonResponse
     {
+        if ($request->user()->role === 'staff') {
+            $room = $reservation->room;
+            if ($room && $room->hotel_id !== $request->user()->hotel_id) {
+                return response()->json(['message' => 'Unauthorized.'], 403);
+            }
+        }
+
         $validated = $request->validate([
             'status' => ['sometimes', 'in:pending,confirmed,cancelled,completed'],
             'special_requests' => ['nullable', 'string', 'max:1000'],
@@ -207,8 +239,12 @@ class ReservationController extends Controller
      */
     public function cancel(Request $request, Reservation $reservation): JsonResponse
     {
-        // Users can only cancel their own reservations
-        if ($reservation->user_id !== $request->user()->id && ! in_array($request->user()->role, ['admin'])) {
+        // Users can only cancel their own reservations unless admin or staff for their hotel
+        $isOwn = $reservation->user_id === $request->user()->id;
+        $isAdmin = $request->user()->role === 'admin';
+        $isStaff = $request->user()->role === 'staff' && $reservation->room && $reservation->room->hotel_id === $request->user()->hotel_id;
+
+        if (!$isOwn && !$isAdmin && !$isStaff) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 

@@ -73,6 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Promotions management
         Route::post('/promotions', [PromotionController::class, 'store']);
         Route::put('/promotions/{promotion}', [PromotionController::class, 'update']);
+        Route::delete('/promotions/{promotion}', [PromotionController::class, 'destroy']);
 
         // View reservations by date
         Route::get('/staff/reservations/by-date', [ReservationController::class, 'byDate']);
@@ -103,8 +104,5 @@ Route::middleware('auth:sanctum')->group(function () {
         // Contact messages
         Route::get('/admin/contact-messages', [ContactController::class, 'index']);
         Route::post('/admin/contact-messages/{contactMessage}/read', [ContactController::class, 'markAsRead']);
-
-        // Delete promotions (admin only)
-        Route::delete('/promotions/{promotion}', [PromotionController::class, 'destroy']);
     });
 });

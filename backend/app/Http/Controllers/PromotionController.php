@@ -14,17 +14,25 @@ class PromotionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Promotion::with('hotel')->where('is_active', true);
+        $query = Promotion::with('hotel');
 
-        // Filter by hotel
-        if ($request->has('hotel_id')) {
-            $query->where('hotel_id', $request->input('hotel_id'));
+        // Enforce strict data isolation for staff
+        $user = $request->user('sanctum');
+        if ($user && $user->role === 'staff') {
+            $query->where('hotel_id', $user->hotel_id);
+        } else {
+            $query->where('is_active', true);
+
+            // Filter by hotel
+            if ($request->has('hotel_id')) {
+                $query->where('hotel_id', $request->input('hotel_id'));
+            }
+
+            // Only show currently valid promotions
+            $today = Carbon::today()->toDateString();
+            $query->where('start_date', '<=', $today)
+                ->where('end_date', '>=', $today);
         }
-
-        // Only show currently valid promotions
-        $today = Carbon::today()->toDateString();
-        $query->where('start_date', '<=', $today)
-            ->where('end_date', '>=', $today);
 
         $promotions = $query->orderBy('created_at', 'desc')->get();
 
@@ -36,8 +44,7 @@ class PromotionController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'hotel_id' => ['required', 'exists:hotels,id'],
+        $rules = [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'discount_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
@@ -45,7 +52,17 @@ class PromotionController extends Controller
             'end_date' => ['required', 'date', 'after:start_date'],
             'code' => ['nullable', 'string', 'max:50', 'unique:promotions'],
             'is_active' => ['boolean'],
-        ]);
+        ];
+
+        if ($request->user()->role === 'admin') {
+            $rules['hotel_id'] = ['required', 'exists:hotels,id'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if ($request->user()->role === 'staff') {
+            $validated['hotel_id'] = $request->user()->hotel_id;
+        }
 
         $promotion = Promotion::create($validated);
 
@@ -70,8 +87,11 @@ class PromotionController extends Controller
      */
     public function update(Request $request, Promotion $promotion): JsonResponse
     {
-        $validated = $request->validate([
-            'hotel_id' => ['sometimes', 'exists:hotels,id'],
+        if ($request->user()->role === 'staff' && $promotion->hotel_id !== $request->user()->hotel_id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $rules = [
             'title' => ['sometimes', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'discount_percentage' => ['sometimes', 'numeric', 'min:0', 'max:100'],
@@ -79,7 +99,17 @@ class PromotionController extends Controller
             'end_date' => ['sometimes', 'date', 'after:start_date'],
             'code' => ['sometimes', 'string', 'max:50', 'unique:promotions,code,'.$promotion->id],
             'is_active' => ['boolean'],
-        ]);
+        ];
+
+        if ($request->user()->role === 'admin') {
+            $rules['hotel_id'] = ['sometimes', 'exists:hotels,id'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if ($request->user()->role === 'staff') {
+            $validated['hotel_id'] = $request->user()->hotel_id;
+        }
 
         $promotion->update($validated);
 
@@ -90,10 +120,14 @@ class PromotionController extends Controller
     }
 
     /**
-     * Remove the specified promotion (Admin only).
+     * Remove the specified promotion (Admin only / Staff bound to hotel).
      */
-    public function destroy(Promotion $promotion): JsonResponse
+    public function destroy(Request $request, Promotion $promotion): JsonResponse
     {
+        if ($request->user()->role === 'staff' && $promotion->hotel_id !== $request->user()->hotel_id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
         $promotion->delete();
 
         return response()->json([
