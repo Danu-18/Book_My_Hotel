@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "react-toastify";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -13,7 +14,6 @@ function LoginPageContent() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -32,15 +32,15 @@ function LoginPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
       await login(email, password);
+      toast.success("Logged in successfully!");
       router.push(next);
     } catch (err: unknown) {
       const errorData = err as { response?: { data?: { message?: string } } };
-      setError(errorData.response?.data?.message || "Login failed. Please try again.");
+      toast.error(errorData.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -55,12 +55,6 @@ function LoginPageContent() {
             <p className="mt-2 text-sm text-muted-foreground">Login to your BookMyHotel account</p>
           </div>
 
-          {error && (
-            <div className="mt-4 bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <label className="block min-w-0">
               <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
@@ -73,7 +67,6 @@ function LoginPageContent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="you@example.com"
                   className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                 />
               </div>
@@ -90,7 +83,6 @@ function LoginPageContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="••••••••"
                   className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                 />
               </div>

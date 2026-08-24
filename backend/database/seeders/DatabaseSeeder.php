@@ -40,7 +40,6 @@ class DatabaseSeeder extends Seeder
 
         // Create a sample customer
         $customer = User::create([
-            'name' => 'John Smith',
             'email' => 'customer@bookmyhotel.com',
             'password' => 'password123',
             'role' => 'customer',

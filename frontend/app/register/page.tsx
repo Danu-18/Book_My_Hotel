@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "react-toastify";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -14,7 +15,6 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -33,16 +33,16 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
 
     setLoading(true);
     try {
       await register(name, email, password, phone);
+      toast.success("Account created successfully!");
       router.push("/");
     } catch (err: unknown) {
       const errorData = err as {
@@ -51,9 +51,9 @@ export default function RegisterPage() {
       const errors = errorData.response?.data?.errors;
       if (errors) {
         const firstError = Object.values(errors)[0]?.[0];
-        setError(firstError || "Registration failed.");
+        toast.error(firstError || "Registration failed.");
       } else {
-        setError(errorData.response?.data?.message || "Registration failed. Please try again.");
+        toast.error(errorData.response?.data?.message || "Registration failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -69,12 +69,6 @@ export default function RegisterPage() {
             <p className="mt-2 text-sm text-muted-foreground">Join BookMyHotel.com today</p>
           </div>
 
-          {error && (
-            <div className="mt-4 bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <label className="block min-w-0">
               <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
@@ -87,7 +81,6 @@ export default function RegisterPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  placeholder="John Smith"
                   className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                 />
               </div>
@@ -104,7 +97,6 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="you@example.com"
                   className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                 />
               </div>
@@ -120,7 +112,6 @@ export default function RegisterPage() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+971 50 000 0000"
                   className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                 />
               </div>
@@ -138,7 +129,6 @@ export default function RegisterPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={8}
-                  placeholder="Minimum 8 characters"
                   className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                 />
               </div>
@@ -156,7 +146,6 @@ export default function RegisterPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   minLength={8}
-                  placeholder="Re-enter your password"
                   className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
                 />
               </div>
