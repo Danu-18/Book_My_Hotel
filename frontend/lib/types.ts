@@ -32,6 +32,7 @@ export interface Room {
   price_per_night: string;
   total_rooms: number;
   available_rooms: number;
+  remaining_rooms?: number;
   amenities: string[] | null;
   image_url: string | null;
   is_active: boolean;

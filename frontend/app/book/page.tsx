@@ -337,11 +337,7 @@ function BookPageContent() {
                   ✓ Promotion applied: -{appliedPromo.discount_percentage}% discount
                 </div>
               )}
-              {promoError && (
-                <div className="mt-2 bg-destructive/10 border border-destructive/20 text-destructive px-3 py-2 rounded-lg text-xs font-semibold">
-                  ✗ {promoError}
-                </div>
-              )}
+             
             </div>
 
             {/* Price breakdown */}

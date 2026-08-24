@@ -53,6 +53,12 @@ class RoomController extends Controller
             $checkIn = Carbon::parse($request->input('check_in'))->toDateString();
             $checkOut = Carbon::parse($request->input('check_out'))->toDateString();
 
+            $query->withCount(['reservations as overlapping_reservations_count' => function ($q) use ($checkIn, $checkOut) {
+                $q->whereIn('status', ['confirmed', 'pending'])
+                  ->where('check_in_date', '<', $checkOut)
+                  ->where('check_out_date', '>', $checkIn);
+            }]);
+
             $query->where(function ($q) use ($checkIn, $checkOut) {
                 $q->whereRaw('available_rooms > (
                     select count(*) from reservations 
@@ -65,6 +71,13 @@ class RoomController extends Controller
         }
 
         $rooms = $query->paginate($request->input('per_page', 12));
+
+        if ($request->has('check_in') && $request->has('check_out')) {
+            $rooms->through(function ($room) {
+                $room->remaining_rooms = max(0, $room->available_rooms - $room->overlapping_reservations_count);
+                return $room;
+            });
+        }
 
         return response()->json($rooms);
     }
