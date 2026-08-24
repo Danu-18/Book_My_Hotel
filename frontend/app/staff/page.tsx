@@ -154,27 +154,27 @@ export default function StaffDashboard() {
 
   if (authLoading || loading) {
     return (
-      <main className="flex-1 flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <main className="flex-1 flex items-center justify-center py-20 bg-background text-foreground">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </main>
     );
   }
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full">
-      <h1 className="text-3xl font-bold text-gray-900">Hotel Staff Dashboard</h1>
-      <p className="mt-2 text-gray-600">Update room availability, prices, and manage promotions</p>
+    <main className="flex-1 max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full bg-background text-foreground">
+      <h1 className="text-3xl font-bold text-foreground font-display">Hotel Staff Dashboard</h1>
+      <p className="mt-2 text-sm text-muted-foreground">Update room availability, prices, and manage promotions</p>
 
       {/* Tabs */}
-      <div className="mt-6 flex space-x-2 border-b border-gray-200">
+      <div className="mt-6 flex space-x-2 border-b border-border/60">
         {(["rooms", "reservations", "promotions"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
               activeTab === tab
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -186,86 +186,114 @@ export default function StaffDashboard() {
       {activeTab === "rooms" && (
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Add Room Form */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-900">Add New Room</h2>
-            <form onSubmit={handleRoomSubmit} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Hotel</label>
-                <select
-                  value={roomForm.hotel_id}
-                  onChange={(e) => setRoomForm({ ...roomForm, hotel_id: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                >
-                  <option value="">Select Hotel</option>
-                  {hotels.map((hotel) => (
-                    <option key={hotel.id} value={hotel.id}>{hotel.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Room Type</label>
-                <input
-                  type="text"
-                  value={roomForm.room_type}
-                  onChange={(e) => setRoomForm({ ...roomForm, room_type: e.target.value })}
-                  required
-                  placeholder="Deluxe Room"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Room #</label>
+          <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50 self-start space-y-6">
+            <h2 className="text-xl font-bold text-foreground font-display">Add New Room</h2>
+            <form onSubmit={handleRoomSubmit} className="space-y-4">
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Hotel
+                </span>
+                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                  <select
+                    value={roomForm.hotel_id}
+                    onChange={(e) => setRoomForm({ ...roomForm, hotel_id: e.target.value })}
+                    required
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                  >
+                    <option value="">Select Hotel</option>
+                    {hotels.map((hotel) => (
+                      <option key={hotel.id} value={hotel.id}>{hotel.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </label>
+
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Room Type
+                </span>
+                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
                   <input
                     type="text"
-                    value={roomForm.room_number}
-                    onChange={(e) => setRoomForm({ ...roomForm, room_number: e.target.value })}
+                    value={roomForm.room_type}
+                    onChange={(e) => setRoomForm({ ...roomForm, room_type: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    placeholder="Deluxe Room"
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Capacity</label>
-                  <input
-                    type="number"
-                    value={roomForm.capacity}
-                    onChange={(e) => setRoomForm({ ...roomForm, capacity: Number(e.target.value) })}
-                    min={1}
-                    max={10}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  />
-                </div>
-              </div>
+              </label>
+
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Price/Night (AED)</label>
-                  <input
-                    type="number"
-                    value={roomForm.price_per_night}
-                    onChange={(e) => setRoomForm({ ...roomForm, price_per_night: e.target.value })}
-                    min={0}
-                    step="0.01"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Available</label>
-                  <input
-                    type="number"
-                    value={roomForm.available_rooms}
-                    onChange={(e) => setRoomForm({ ...roomForm, available_rooms: Number(e.target.value) })}
-                    min={0}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  />
-                </div>
+                <label className="block min-w-0">
+                  <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Room #
+                  </span>
+                  <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                    <input
+                      type="text"
+                      value={roomForm.room_number}
+                      onChange={(e) => setRoomForm({ ...roomForm, room_number: e.target.value })}
+                      required
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                    />
+                  </div>
+                </label>
+                <label className="block min-w-0">
+                  <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Capacity
+                  </span>
+                  <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                    <input
+                      type="number"
+                      value={roomForm.capacity}
+                      onChange={(e) => setRoomForm({ ...roomForm, capacity: Number(e.target.value) })}
+                      min={1}
+                      max={10}
+                      required
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                    />
+                  </div>
+                </label>
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <label className="block min-w-0">
+                  <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Price/Night (AED)
+                  </span>
+                  <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                    <input
+                      type="number"
+                      value={roomForm.price_per_night}
+                      onChange={(e) => setRoomForm({ ...roomForm, price_per_night: e.target.value })}
+                      min={0}
+                      step="0.01"
+                      required
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                    />
+                  </div>
+                </label>
+                <label className="block min-w-0">
+                  <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Available
+                  </span>
+                  <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                    <input
+                      type="number"
+                      value={roomForm.available_rooms}
+                      onChange={(e) => setRoomForm({ ...roomForm, available_rooms: Number(e.target.value) })}
+                      min={0}
+                      required
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                    />
+                  </div>
+                </label>
+              </div>
+
               <button
                 type="submit"
-                className="w-full py-2.5 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
+                className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 cursor-pointer"
               >
                 Add Room
               </button>
@@ -273,57 +301,61 @@ export default function StaffDashboard() {
           </div>
 
           {/* Room List */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">Room Inventory</h2>
+          <div className="lg:col-span-2 bg-card rounded-2xl shadow-xl overflow-hidden ring-1 ring-border/50 flex flex-col self-start">
+            <div className="p-6 border-b border-border/60">
+              <h2 className="text-xl font-bold text-foreground font-display">Room Inventory</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-border/60">
+                <thead className="bg-muted/40">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Room</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Hotel</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Price</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Available</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                    <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Room</th>
+                    <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Hotel</th>
+                    <th className="px-4 py-3.5 text-right text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Price</th>
+                    <th className="px-4 py-3.5 text-right text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Available</th>
+                    <th className="px-4 py-3.5 text-center text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Status</th>
+                    <th className="px-4 py-3.5 text-center text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border/40 text-sm">
                   {rooms.map((room) => (
                     <tr key={room.id}>
                       <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900">{room.room_type}</div>
-                        <div className="text-xs text-gray-500">#{room.room_number}</div>
+                        <div className="font-semibold text-foreground">{room.room_type}</div>
+                        <div className="text-xs text-muted-foreground">#{room.room_number}</div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{room.hotel?.name || "N/A"}</td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        <input
-                          type="number"
-                          defaultValue={parseFloat(room.price_per_night)}
-                          min={0}
-                          step="0.01"
-                          onBlur={(e) =>
-                            handleUpdateRoom(room.id, Number(e.target.value), room.available_rooms, room.is_active)
-                          }
-                          className="w-24 px-2 py-1 text-right border border-gray-300 rounded text-sm"
-                        />
-                        <span className="ml-1 text-xs text-gray-500">AED</span>
+                      <td className="px-4 py-3 text-foreground/80">{room.hotel?.name || "N/A"}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="inline-flex items-center gap-1 bg-background px-2 py-1 rounded-md border border-border">
+                          <input
+                            type="number"
+                            defaultValue={parseFloat(room.price_per_night)}
+                            min={0}
+                            step="0.01"
+                            onBlur={(e) =>
+                              handleUpdateRoom(room.id, Number(e.target.value), room.available_rooms, room.is_active)
+                            }
+                            className="w-16 text-right bg-transparent outline-none text-foreground"
+                          />
+                          <span className="text-[0.7rem] text-muted-foreground font-semibold">AED</span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        <input
-                          type="number"
-                          defaultValue={room.available_rooms}
-                          min={0}
-                          onBlur={(e) =>
-                            handleUpdateRoom(room.id, parseFloat(room.price_per_night), Number(e.target.value), room.is_active)
-                          }
-                          className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
-                        />
+                      <td className="px-4 py-3 text-right">
+                        <div className="inline-flex bg-background px-2 py-1 rounded-md border border-border">
+                          <input
+                            type="number"
+                            defaultValue={room.available_rooms}
+                            min={0}
+                            onBlur={(e) =>
+                              handleUpdateRoom(room.id, parseFloat(room.price_per_night), Number(e.target.value), room.is_active)
+                            }
+                            className="w-10 text-center bg-transparent outline-none text-foreground"
+                          />
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
-                          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                          className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
                             room.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                           }`}
                         >
@@ -333,7 +365,7 @@ export default function StaffDashboard() {
                       <td className="px-4 py-3 text-center">
                         <button
                           onClick={() => handleUpdateRoom(room.id, parseFloat(room.price_per_night), room.available_rooms, !room.is_active)}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-xs text-primary hover:underline font-semibold cursor-pointer"
                         >
                           {room.is_active ? "Disable" : "Enable"}
                         </button>
@@ -349,50 +381,54 @@ export default function StaffDashboard() {
 
       {/* Reservations Tab */}
       {activeTab === "reservations" && (
-        <div className="mt-8">
-          <div className="bg-white rounded-lg shadow-sm p-4 flex flex-wrap items-end gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">View Date</label>
-              <input
-                type="date"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              />
-            </div>
+        <div className="mt-8 space-y-6">
+          <div className="bg-card rounded-2xl shadow-xl p-4 ring-1 ring-border/50 flex flex-wrap items-end gap-4">
+            <label className="block min-w-0">
+              <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                View Date
+              </span>
+              <div className="mt-1 rounded-lg bg-background px-3 py-2 ring-1 ring-border">
+                <input
+                  type="date"
+                  value={filterDate}
+                  onChange={(e) => setFilterDate(e.target.value)}
+                  className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                />
+              </div>
+            </label>
           </div>
 
-          <div className="mt-4 bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">
+          <div className="bg-card rounded-2xl shadow-xl overflow-hidden ring-1 ring-border/50">
+            <div className="p-6 border-b border-border/60">
+              <h2 className="text-xl font-bold text-foreground font-display">
                 Reservations for {new Date(filterDate).toLocaleDateString()}
               </h2>
             </div>
             {reservations.length === 0 ? (
-              <div className="p-10 text-center text-gray-500">No reservations for this date</div>
+              <div className="p-10 text-center text-xs text-muted-foreground">No reservations for this date</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-border/60">
+                  <thead className="bg-muted/40">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Guest</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Hotel</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Room</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Dates</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</th>
+                      <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Guest</th>
+                      <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Hotel</th>
+                      <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Room</th>
+                      <th className="px-4 py-3.5 text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Dates</th>
+                      <th className="px-4 py-3.5 text-right text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">Total</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-border/40 text-sm">
                     {reservations.map((reservation) => (
                       <tr key={reservation.id}>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{reservation.user?.name}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{reservation.room?.hotel?.name}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{reservation.room?.room_type}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-4 py-3 font-semibold text-foreground">{reservation.user?.name}</td>
+                        <td className="px-4 py-3 text-foreground/80">{reservation.room?.hotel?.name}</td>
+                        <td className="px-4 py-3 text-foreground/80">{reservation.room?.room_type}</td>
+                        <td className="px-4 py-3 text-foreground/80">
                           {new Date(reservation.check_in_date).toLocaleDateString()} →{" "}
                           {new Date(reservation.check_out_date).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                        <td className="px-4 py-3 text-right font-bold text-primary font-sans">
                           {parseFloat(reservation.total_price).toLocaleString()} AED
                         </td>
                       </tr>
@@ -409,90 +445,125 @@ export default function StaffDashboard() {
       {activeTab === "promotions" && (
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Create Promotion Form */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-900">Create Promotion</h2>
-            <form onSubmit={handlePromoSubmit} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Hotel</label>
-                <select
-                  value={promoForm.hotel_id}
-                  onChange={(e) => setPromoForm({ ...promoForm, hotel_id: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                >
-                  <option value="">Select Hotel</option>
-                  {hotels.map((hotel) => (
-                    <option key={hotel.id} value={hotel.id}>{hotel.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Title</label>
-                <input
-                  type="text"
-                  value={promoForm.title}
-                  onChange={(e) => setPromoForm({ ...promoForm, title: e.target.value })}
-                  required
-                  placeholder="Summer Special"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Description</label>
-                <textarea
-                  value={promoForm.description}
-                  onChange={(e) => setPromoForm({ ...promoForm, description: e.target.value })}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Discount %</label>
-                <input
-                  type="number"
-                  value={promoForm.discount_percentage}
-                  onChange={(e) => setPromoForm({ ...promoForm, discount_percentage: e.target.value })}
-                  min={0}
-                  max={100}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-              </div>
+          <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50 self-start space-y-6">
+            <h2 className="text-xl font-bold text-foreground font-display">Create Promotion</h2>
+            <form onSubmit={handlePromoSubmit} className="space-y-4">
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Hotel
+                </span>
+                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                  <select
+                    value={promoForm.hotel_id}
+                    onChange={(e) => setPromoForm({ ...promoForm, hotel_id: e.target.value })}
+                    required
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                  >
+                    <option value="">Select Hotel</option>
+                    {hotels.map((hotel) => (
+                      <option key={hotel.id} value={hotel.id}>{hotel.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </label>
+
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Title
+                </span>
+                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                  <input
+                    type="text"
+                    value={promoForm.title}
+                    onChange={(e) => setPromoForm({ ...promoForm, title: e.target.value })}
+                    required
+                    placeholder="Summer Special"
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                  />
+                </div>
+              </label>
+
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Description
+                </span>
+                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                  <textarea
+                    value={promoForm.description}
+                    onChange={(e) => setPromoForm({ ...promoForm, description: e.target.value })}
+                    rows={2}
+                    placeholder="Describe discount details..."
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                  />
+                </div>
+              </label>
+
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Discount Percentage
+                </span>
+                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                  <input
+                    type="number"
+                    value={promoForm.discount_percentage}
+                    onChange={(e) => setPromoForm({ ...promoForm, discount_percentage: e.target.value })}
+                    min={0}
+                    max={100}
+                    required
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                  />
+                </div>
+              </label>
+
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Start</label>
+                <label className="block min-w-0">
+                  <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Start
+                  </span>
+                  <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                    <input
+                      type="date"
+                      value={promoForm.start_date}
+                      onChange={(e) => setPromoForm({ ...promoForm, start_date: e.target.value })}
+                      required
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                    />
+                  </div>
+                </label>
+                <label className="block min-w-0">
+                  <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                    End
+                  </span>
+                  <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                    <input
+                      type="date"
+                      value={promoForm.end_date}
+                      onChange={(e) => setPromoForm({ ...promoForm, end_date: e.target.value })}
+                      required
+                      className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground"
+                    />
+                  </div>
+                </label>
+              </div>
+
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Code
+                </span>
+                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
                   <input
-                    type="date"
-                    value={promoForm.start_date}
-                    onChange={(e) => setPromoForm({ ...promoForm, start_date: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    type="text"
+                    value={promoForm.code}
+                    onChange={(e) => setPromoForm({ ...promoForm, code: e.target.value })}
+                    placeholder="SUMMER15"
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground uppercase font-semibold"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">End</label>
-                  <input
-                    type="date"
-                    value={promoForm.end_date}
-                    onChange={(e) => setPromoForm({ ...promoForm, end_date: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Code</label>
-                <input
-                  type="text"
-                  value={promoForm.code}
-                  onChange={(e) => setPromoForm({ ...promoForm, code: e.target.value })}
-                  placeholder="SUMMER15"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-              </div>
+              </label>
+
               <button
                 type="submit"
-                className="w-full py-2.5 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
+                className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 cursor-pointer"
               >
                 Create Promotion
               </button>
@@ -500,36 +571,36 @@ export default function StaffDashboard() {
           </div>
 
           {/* Promotions List */}
-          <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold text-gray-900">Active Promotions</h2>
-            <div className="mt-4 space-y-4">
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="text-xl font-bold text-foreground font-display">Active Promotions</h2>
+            <div className="space-y-4">
               {promotions.map((promo) => (
-                <div key={promo.id} className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex justify-between items-start">
+                <div key={promo.id} className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50">
+                  <div className="flex justify-between items-start gap-4">
                     <div>
-                      <h3 className="font-semibold text-gray-900">{promo.title}</h3>
-                      <p className="text-sm text-gray-500">{promo.hotel?.name}</p>
+                      <h3 className="font-semibold text-foreground text-base font-display">{promo.title}</h3>
+                      <p className="text-xs text-muted-foreground">{promo.hotel?.name}</p>
                     </div>
-                    <span className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+                    <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shrink-0">
                       -{promo.discount_percentage}%
                     </span>
                   </div>
                   {promo.description && (
-                    <p className="mt-2 text-sm text-gray-600">{promo.description}</p>
+                    <p className="mt-2 text-xs text-foreground/80">{promo.description}</p>
                   )}
-                  <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                  <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground border-t border-border/60 pt-3">
                     <span>
                       {new Date(promo.start_date).toLocaleDateString()} →{" "}
                       {new Date(promo.end_date).toLocaleDateString()}
                     </span>
                     <span>
-                      Code: <strong className="font-mono">{promo.code}</strong>
+                      Code: <strong className="font-mono text-primary">{promo.code}</strong>
                     </span>
                   </div>
                 </div>
               ))}
               {promotions.length === 0 && (
-                <div className="bg-white rounded-lg shadow-sm p-10 text-center text-gray-500">
+                <div className="bg-card rounded-2xl p-10 text-center text-xs text-muted-foreground shadow-xl ring-1 ring-border/50">
                   No active promotions
                 </div>
               )}

@@ -65,26 +65,26 @@ export default function ReservationsPage() {
 
   if (authLoading) {
     return (
-      <main className="flex-1 flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <main className="flex-1 flex items-center justify-center py-20 bg-background text-foreground">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </main>
     );
   }
 
   return (
-    <main className="flex-1 max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
+    <main className="flex-1 max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full bg-background text-foreground">
+      <div className="flex justify-between items-center gap-4">
+        <h1 className="text-3xl font-bold text-foreground font-display">My Bookings</h1>
         <Link
           href="/hotels"
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+          className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90"
         >
           Book New Stay
         </Link>
       </div>
 
       {/* Status filter */}
-      <div className="mt-6 flex space-x-2 flex-wrap">
+      <div className="mt-6 flex space-x-2 flex-wrap gap-y-2">
         {["", "pending", "confirmed", "cancelled", "completed"].map((status) => (
           <button
             key={status}
@@ -92,10 +92,10 @@ export default function ReservationsPage() {
               setStatusFilter(status);
               setPage(1);
             }}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+            className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-colors cursor-pointer ${
               statusFilter === status
-                ? "bg-blue-600 text-white"
-                : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card text-foreground border border-border hover:bg-muted"
             }`}
           >
             {status === "" ? "All" : status.charAt(0).toUpperCase() + status.slice(1)}
@@ -106,16 +106,16 @@ export default function ReservationsPage() {
       {loading ? (
         <div className="mt-8 space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-lg shadow animate-pulse h-32"></div>
+            <div key={i} className="bg-card rounded-2xl shadow animate-pulse h-32"></div>
           ))}
         </div>
       ) : reservations.length === 0 ? (
-        <div className="mt-12 text-center py-16 bg-white rounded-lg shadow-sm">
-          <h2 className="text-xl font-semibold text-gray-900">No bookings found</h2>
-          <p className="mt-2 text-gray-600">You haven't made any reservations yet.</p>
+        <div className="mt-12 text-center py-16 bg-card rounded-2xl shadow-xl ring-1 ring-border/50">
+          <h2 className="text-xl font-bold text-foreground font-display">No bookings found</h2>
+          <p className="mt-2 text-sm text-muted-foreground">You haven't made any reservations yet.</p>
           <Link
             href="/hotels"
-            className="mt-6 inline-block px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+            className="mt-6 inline-block px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90"
           >
             Browse Hotels
           </Link>
@@ -123,53 +123,55 @@ export default function ReservationsPage() {
       ) : (
         <div className="mt-8 space-y-4">
           {reservations.map((reservation) => (
-            <div key={reservation.id} className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div key={reservation.id} className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <div className="flex items-center space-x-3">
-                    <h2 className="text-lg font-semibold text-gray-900">
+                  <div className="flex items-center space-x-3 flex-wrap gap-y-1">
+                    <h2 className="text-lg font-bold text-foreground font-display">
                       {reservation.room?.hotel?.name || `Reservation #${reservation.id}`}
                     </h2>
                     <span
-                      className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[reservation.status]}`}
+                      className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${statusColors[reservation.status]}`}
                     >
                       {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {reservation.room?.room_type} · {reservation.guests} guest{reservation.guests > 1 ? "s" : ""}
                   </p>
-                  <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-600">
+                  <div className="mt-3 flex flex-wrap gap-4 text-xs text-foreground/80">
                     <span>
-                      <strong>Check In:</strong>{" "}
+                      <strong className="text-foreground">Check In:</strong>{" "}
                       {new Date(reservation.check_in_date).toLocaleDateString()}
                     </span>
                     <span>
-                      <strong>Check Out:</strong>{" "}
+                      <strong className="text-foreground">Check Out:</strong>{" "}
                       {new Date(reservation.check_out_date).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 sm:mt-0 text-right">
-                  <div className="text-2xl font-bold text-gray-900">
+                <div className="sm:mt-0 text-left sm:text-right flex-shrink-0">
+                  <div className="text-xl font-bold text-primary font-sans">
                     {parseFloat(reservation.total_price).toLocaleString()} AED
                   </div>
-                  {reservation.status === "confirmed" && (
-                    <button
-                      onClick={() => handleCancel(reservation.id)}
-                      className="mt-2 text-sm text-red-600 hover:text-red-700 font-medium"
-                    >
-                      Cancel Booking
-                    </button>
-                  )}
-                  {reservation.status === "pending" && (
-                    <Link
-                      href={`/book/pay?reservation_id=${reservation.id}`}
-                      className="mt-2 inline-block text-sm text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      Complete Payment
-                    </Link>
-                  )}
+                  <div className="mt-1 flex items-center justify-start sm:justify-end gap-2 text-xs">
+                    {reservation.status === "confirmed" && (
+                      <button
+                        onClick={() => handleCancel(reservation.id)}
+                        className="text-destructive hover:underline font-semibold cursor-pointer"
+                      >
+                        Cancel Booking
+                      </button>
+                    )}
+                    {reservation.status === "pending" && (
+                      <Link
+                        href={`/book/pay?reservation_id=${reservation.id}`}
+                        className="text-primary hover:underline font-semibold"
+                      >
+                        Complete Payment
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -177,21 +179,21 @@ export default function ReservationsPage() {
 
           {/* Pagination */}
           {lastPage > 1 && (
-            <div className="flex justify-center space-x-4">
+            <div className="flex justify-center space-x-4 pt-4">
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="px-4 py-2 bg-card border border-border rounded-lg text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-50 cursor-pointer"
               >
                 Previous
               </button>
-              <span className="px-4 py-2 text-sm text-gray-700">
+              <span className="px-4 py-2 text-xs text-muted-foreground font-semibold">
                 Page {page} of {lastPage}
               </span>
               <button
                 onClick={() => setPage(Math.min(lastPage, page + 1))}
                 disabled={page === lastPage}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="px-4 py-2 bg-card border border-border rounded-lg text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-50 cursor-pointer"
               >
                 Next
               </button>

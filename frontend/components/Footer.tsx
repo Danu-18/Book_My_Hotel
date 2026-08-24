@@ -9,7 +9,7 @@ export default function Footer() {
 
   return (
     <footer className="px-4 py-14 sm:px-6 mt-auto" style={{ backgroundImage: "var(--gradient-footer)" }}>
-      <div className="mx-auto grid max-w-7xl gap-10 text-cocoa-foreground md:grid-cols-[2fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-7xl gap-10 text-primary-foreground md:grid-cols-[2fr_1fr_1fr]">
         {/* About section */}
         <div>
           <div className="flex items-center gap-2">

@@ -45,26 +45,26 @@ function PayPageContent() {
 
   if (authLoading || loading) {
     return (
-      <main className="flex-1 flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <main className="flex-1 flex items-center justify-center py-20 bg-background text-foreground">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </main>
     );
   }
 
   if (paid) {
     return (
-      <main className="flex-1 flex items-center justify-center px-4 py-20 bg-gray-50">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-            <span className="text-3xl">✓</span>
+      <main className="flex-1 flex items-center justify-center px-4 py-20 bg-background text-foreground">
+        <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto text-primary text-3xl font-bold">
+            ✓
           </div>
-          <h1 className="mt-6 text-2xl font-bold text-gray-900">Payment Successful!</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="mt-6 text-2xl font-bold text-foreground font-display">Payment Successful!</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Your payment has been processed and your reservation is confirmed.
           </p>
           <button
             onClick={() => router.push("/reservations")}
-            className="mt-6 w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
+            className="mt-6 w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90"
           >
             View My Bookings
           </button>
@@ -75,12 +75,12 @@ function PayPageContent() {
 
   if (!reservation) {
     return (
-      <main className="flex-1 flex items-center justify-center py-20 bg-gray-50">
+      <main className="flex-1 flex items-center justify-center py-20 bg-background text-foreground">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Reservation not found</h1>
+          <h1 className="text-2xl font-bold text-foreground font-display">Reservation not found</h1>
           <button
             onClick={() => router.push("/reservations")}
-            className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+            className="mt-4 text-primary hover:underline font-medium"
           >
             ← Back to my bookings
           </button>
@@ -91,15 +91,15 @@ function PayPageContent() {
 
   if (reservation.status === "confirmed") {
     return (
-      <main className="flex-1 flex items-center justify-center px-4 py-20 bg-gray-50">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Already Paid</h1>
-          <p className="mt-2 text-gray-600">
+      <main className="flex-1 flex items-center justify-center px-4 py-20 bg-background text-foreground">
+        <div className="bg-card rounded-2xl shadow-xl p-8 max-w-md w-full text-center ring-1 ring-border/50">
+          <h1 className="text-2xl font-bold text-foreground font-display">Already Paid</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             This reservation is already confirmed and paid.
           </p>
           <button
             onClick={() => router.push("/reservations")}
-            className="mt-6 w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
+            className="mt-6 w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90"
           >
             View My Bookings
           </button>
@@ -109,37 +109,37 @@ function PayPageContent() {
   }
 
   return (
-    <main className="flex-1 max-w-4xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full">
-      <h1 className="text-3xl font-bold text-gray-900">Complete Payment</h1>
+    <main className="flex-1 max-w-4xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full bg-background text-foreground">
+      <h1 className="text-3xl font-bold text-foreground font-display">Complete Payment</h1>
 
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Booking Summary */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900">Booking Summary</h2>
+        <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50">
+          <h2 className="text-xl font-bold text-foreground font-display">Booking Summary</h2>
           <div className="mt-4 space-y-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">Hotel</span>
-              <span className="font-semibold text-gray-900">{reservation.room?.hotel?.name}</span>
+              <span className="text-muted-foreground">Hotel</span>
+              <span className="font-semibold text-foreground">{reservation.room?.hotel?.name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Room</span>
-              <span className="font-semibold text-gray-900">{reservation.room?.room_type}</span>
+              <span className="text-muted-foreground">Room</span>
+              <span className="font-semibold text-foreground">{reservation.room?.room_type}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Check In</span>
-              <span className="font-semibold text-gray-900">{new Date(reservation.check_in_date).toLocaleDateString()}</span>
+              <span className="text-muted-foreground">Check In</span>
+              <span className="font-semibold text-foreground">{new Date(reservation.check_in_date).toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Check Out</span>
-              <span className="font-semibold text-gray-900">{new Date(reservation.check_out_date).toLocaleDateString()}</span>
+              <span className="text-muted-foreground">Check Out</span>
+              <span className="font-semibold text-foreground">{new Date(reservation.check_out_date).toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Guests</span>
-              <span className="font-semibold text-gray-900">{reservation.guests}</span>
+              <span className="text-muted-foreground">Guests</span>
+              <span className="font-semibold text-foreground">{reservation.guests}</span>
             </div>
-            <div className="pt-4 border-t border-gray-200 flex justify-between">
-              <span className="font-bold text-gray-900">Total</span>
-              <span className="font-bold text-blue-600 text-xl">
+            <div className="pt-4 border-t border-border/60 flex justify-between items-baseline">
+              <span className="font-bold text-foreground">Total</span>
+              <span className="font-bold text-primary text-xl">
                 {parseFloat(reservation.total_price).toLocaleString()} AED
               </span>
             </div>
@@ -147,9 +147,9 @@ function PayPageContent() {
         </div>
 
         {/* Payment */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900">Secure Payment</h2>
-          <p className="mt-2 text-sm text-gray-500">
+        <div className="bg-card rounded-2xl shadow-xl p-6 ring-1 ring-border/50">
+          <h2 className="text-xl font-bold text-foreground font-display">Secure Payment</h2>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             Payment is processed securely via Stripe. We never store your card details.
           </p>
           <div className="mt-6">
@@ -227,15 +227,15 @@ function PaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Card Details</label>
-        <div className="mt-1 p-3 border border-gray-300 rounded-md bg-white">
+      <div className="space-y-2">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-widest">Card Details</label>
+        <div className="p-3.5 border border-border rounded-lg bg-background">
           <CardElement
             options={{
               style: {
                 base: {
                   fontSize: "16px",
-                  color: "#424770",
+                  color: "#380560",
                   "::placeholder": { color: "#aab7c4" },
                 },
                 invalid: { color: "#9e2146" },
@@ -243,13 +243,13 @@ function PaymentForm({
             }}
           />
         </div>
-        <p className="mt-2 text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Test Mode: Use card 4242 4242 4242 4242, any future expiry, any CVC.
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
           {error}
         </div>
       )}
@@ -257,7 +257,7 @@ function PaymentForm({
       <button
         type="submit"
         disabled={!stripe || processing}
-        className="w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
         {processing ? "Processing Payment..." : `Pay ${parseFloat(reservation.total_price).toLocaleString()} AED`}
       </button>
@@ -268,8 +268,8 @@ function PaymentForm({
 export default function PayPage() {
   return (
     <Suspense fallback={
-      <main className="flex-1 flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <main className="flex-1 flex items-center justify-center py-20 bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </main>
     }>
       <PayPageContent />
