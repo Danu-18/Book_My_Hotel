@@ -72,7 +72,7 @@ class Reservation extends Model
      */
     public function ancillaryServices(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(AncillaryService::class)
+        return $this->belongsToMany(AncillaryService::class, 'reservation_ancillary_service')
             ->withPivot('quantity', 'price_at_booking')
             ->withTimestamps();
     }

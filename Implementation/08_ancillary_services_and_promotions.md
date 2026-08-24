@@ -20,9 +20,10 @@ Two new tables were registered to handle ancillary services:
     *   Columns: `id`, `reservation_id` (FK), `ancillary_service_id` (FK), `quantity` (int default 1), `price_at_booking` (decimal), `timestamps`.
 
 ### B. Models & Relationships
-*   **[`AncillaryService.php`](file:///d:/Book_My_Hotel/backend/app/Models/AncillaryService.php):** Defines `belongsTo(Hotel)` and `belongsToMany(Reservation)` relationships.
-*   **[`Reservation.php`](file:///d:/Book_My_Hotel/backend/app/Models/Reservation.php):** Added `ancillaryServices()` relationships.
+*   **[`AncillaryService.php`](file:///d:/Book_My_Hotel/backend/app/Models/AncillaryService.php):** Defines `belongsTo(Hotel)` and `belongsToMany(Reservation, 'reservation_ancillary_service')` relationships.
+*   **[`Reservation.php`](file:///d:/Book_My_Hotel/backend/app/Models/Reservation.php):** Added `ancillaryServices()` relationship pointing explicitly to `'reservation_ancillary_service'`.
 *   **[`Hotel.php`](file:///d:/Book_My_Hotel/backend/app/Models/Hotel.php):** Added `ancillaryServices()` relationships.
+
 
 ### C. Controller & API Routes
 *   **[`AncillaryServiceController.php`](file:///d:/Book_My_Hotel/backend/app/Http/Controllers/AncillaryServiceController.php):**

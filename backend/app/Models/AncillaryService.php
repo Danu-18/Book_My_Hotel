@@ -38,7 +38,7 @@ class AncillaryService extends Model
      */
     public function reservations(): BelongsToMany
     {
-        return $this->belongsToMany(Reservation::class)
+        return $this->belongsToMany(Reservation::class, 'reservation_ancillary_service')
             ->withPivot('quantity', 'price_at_booking')
             ->withTimestamps();
     }

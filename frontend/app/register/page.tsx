@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, user, loading: authLoading } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -16,6 +16,20 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push("/");
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading || user) {
+    return (
+      <main className="flex-1 flex items-center justify-center py-20 bg-background text-foreground">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </main>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,109 +61,119 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex-1 flex items-center justify-center px-4 py-16 bg-gray-50">
+    <main className="flex-1 flex items-center justify-center px-4 py-16 bg-background text-foreground">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
-            <p className="mt-2 text-gray-600">Join BookMyHotel.com today</p>
+            <h1 className="text-3xl font-bold text-foreground font-display">Create Account</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Join BookMyHotel.com today</p>
           </div>
 
           {error && (
-            <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+            <div className="mt-4 bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            <label className="block min-w-0">
+              <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
                 Full Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                placeholder="John Smith"
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              />
-            </div>
+              </span>
+              <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  placeholder="John Smith"
+                  className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                />
+              </div>
+            </label>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label className="block min-w-0">
+              <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
                 Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              />
-            </div>
+              </span>
+              <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@example.com"
+                  className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                />
+              </div>
+            </label>
 
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+            <label className="block min-w-0">
+              <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
                 Phone Number (optional)
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+971 50 000 0000"
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              />
-            </div>
+              </span>
+              <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                <input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+971 50 000 0000"
+                  className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                />
+              </div>
+            </label>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label className="block min-w-0">
+              <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
                 Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                placeholder="Minimum 8 characters"
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              />
-            </div>
+              </span>
+              <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  placeholder="Minimum 8 characters"
+                  className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                />
+              </div>
+            </label>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+            <label className="block min-w-0">
+              <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
                 Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={8}
-                placeholder="Re-enter your password"
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              />
-            </div>
+              </span>
+              <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  placeholder="Re-enter your password"
+                  className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold"
+                />
+              </div>
+            </label>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+            <Link href="/login" className="text-primary hover:underline font-semibold">
               Sign in
             </Link>
           </div>
