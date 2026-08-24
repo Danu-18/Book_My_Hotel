@@ -98,13 +98,13 @@ class ReservationController extends Controller
         $nights = $checkIn->diffInDays($checkOut);
 
         // Check for conflicting reservations
-        $conflict = Reservation::where('room_id', $room->id)
-            ->where('status', 'confirmed')
+        $bookedCount = Reservation::where('room_id', $room->id)
+            ->whereIn('status', ['confirmed', 'pending'])
             ->where('check_in_date', '<', $checkOut->toDateString())
             ->where('check_out_date', '>', $checkIn->toDateString())
-            ->exists();
+            ->count();
 
-        if ($conflict) {
+        if ($bookedCount >= $room->available_rooms) {
             return response()->json([
                 'message' => 'This room is not available for the selected dates.',
                 'errors' => ['room_id' => ['Room is already booked for the selected dates.']],
