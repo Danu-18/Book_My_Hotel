@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "react-toastify";
@@ -30,7 +31,7 @@ export default function EditHotelPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== "admin")) {
+    if (!authLoading && !user) {
       router.push("/login?next=/admin/hotels/" + hotelId + "/edit");
       return;
     }
@@ -66,7 +67,7 @@ export default function EditHotelPage() {
     }
   }, [authLoading, user, hotelId, router]);
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <main className="flex-1 flex items-center justify-center py-20 bg-background text-foreground">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -75,7 +76,30 @@ export default function EditHotelPage() {
   }
 
   if (!user || user.role !== "admin") {
-    return null;
+    if (user) {
+      return (
+        <main className="flex-1 flex flex-col items-center justify-center py-20 bg-background text-foreground text-center px-4">
+          <h1 className="text-3xl font-bold font-display text-destructive">Not Authorized</h1>
+          <p className="mt-2 text-muted-foreground">You do not have permission to access this page.</p>
+          <Link href="/" className="mt-6 inline-block rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-opacity hover:opacity-90">
+            Go to Home
+          </Link>
+        </main>
+      );
+    }
+    return (
+      <main className="flex-1 flex items-center justify-center py-20 bg-background text-foreground">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </main>
+    );
+  }
+
+  if (loading) {
+    return (
+      <main className="flex-1 flex items-center justify-center py-20 bg-background text-foreground">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </main>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
