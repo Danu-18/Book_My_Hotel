@@ -37,7 +37,7 @@ function BookPageContent() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push(`/login?next=/book?room_id=${roomId}&check_in=${checkInParam}&check_out=${checkOutParam}`);
+      router.push(`/login?next=${encodeURIComponent(`/book?room_id=${roomId}&check_in=${checkInParam}&check_out=${checkOutParam}`)}`);
       return;
     }
 
@@ -337,11 +337,7 @@ function BookPageContent() {
                   ✓ Promotion applied: -{appliedPromo.discount_percentage}% discount
                 </div>
               )}
-              {promoError && (
-                <div className="mt-2 bg-destructive/10 border border-destructive/20 text-destructive px-3 py-2 rounded-lg text-xs font-semibold">
-                  ✗ {promoError}
-                </div>
-              )}
+             
             </div>
 
             {/* Price breakdown */}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "react-toastify";
 
 export default function NewHotelPage() {
   const router = useRouter();
@@ -56,7 +57,7 @@ export default function NewHotelPage() {
       };
 
       await api.post("/hotels", payload);
-      alert("Hotel created successfully!");
+      toast.success("Hotel created successfully!");
       router.push("/admin");
     } catch (err: unknown) {
       console.error("Failed to create hotel:", err);

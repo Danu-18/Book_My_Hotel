@@ -18,6 +18,29 @@ export default function ReservationsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [reservationToCancel, setReservationToCancel] = useState<number | null>(null);
 
+  // Review states
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [activeReviewData, setActiveReviewData] = useState<{
+    hotel_id: number;
+    room_id: number;
+    reservation_id: number;
+  } | null>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewedReservationIds, setReviewedReservationIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    const cached = localStorage.getItem("reviewed_reservation_ids");
+    if (cached) {
+      try {
+        setReviewedReservationIds(JSON.parse(cached));
+      } catch (e) {
+        console.error("Failed to parse cached review IDs", e);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login?next=/reservations");
@@ -55,6 +78,37 @@ export default function ReservationsPage() {
       console.error("Failed to cancel reservation:", error);
       const errorData = error as { response?: { data?: { message?: string } } };
       toast.error(errorData.response?.data?.message || "Failed to cancel reservation.");
+    }
+  };
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeReviewData) return;
+    setSubmittingReview(true);
+    try {
+      await api.post("/reviews", {
+        hotel_id: activeReviewData.hotel_id,
+        room_id: activeReviewData.room_id,
+        reservation_id: activeReviewData.reservation_id,
+        rating,
+        comment,
+      });
+      toast.success("Review submitted successfully!");
+      
+      const newReviewedIds = [...reviewedReservationIds, activeReviewData.reservation_id];
+      setReviewedReservationIds(newReviewedIds);
+      localStorage.setItem("reviewed_reservation_ids", JSON.stringify(newReviewedIds));
+      
+      setReviewModalOpen(false);
+      setActiveReviewData(null);
+      setRating(5);
+      setComment("");
+    } catch (error: unknown) {
+      console.error("Failed to submit review:", error);
+      const errorData = error as { response?: { data?: { message?: string } } };
+      toast.error(errorData.response?.data?.message || "Failed to submit review.");
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -173,6 +227,29 @@ export default function ReservationsPage() {
                         Complete Payment
                       </Link>
                     )}
+                    {reservation.status === "completed" && (
+                      reviewedReservationIds.includes(reservation.id) ? (
+                        <span className="text-muted-foreground font-semibold">
+                          Reviewed
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (reservation.room) {
+                              setActiveReviewData({
+                                hotel_id: reservation.room.hotel_id,
+                                room_id: reservation.room_id,
+                                reservation_id: reservation.id,
+                              });
+                              setReviewModalOpen(true);
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-opacity cursor-pointer shadow-sm text-xs"
+                        >
+                          Leave Review
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
@@ -229,6 +306,76 @@ export default function ReservationsPage() {
                 Yes, Cancel Booking
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Review Modal */}
+      {reviewModalOpen && activeReviewData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-6 max-w-md w-full mx-4 space-y-4 text-left">
+            <h3 className="text-lg font-bold text-foreground font-display">Leave a Review</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Share your stay experience with others.
+            </p>
+            <form onSubmit={handleReviewSubmit} className="space-y-4">
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Rating
+                </span>
+                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                  <select
+                    value={rating}
+                    onChange={(e) => setRating(Number(e.target.value))}
+                    className="w-full bg-transparent text-sm outline-none text-foreground font-semibold"
+                  >
+                    <option value={5} className="bg-card text-foreground">★★★★★ (5 - Excellent)</option>
+                    <option value={4} className="bg-card text-foreground">★★★★☆ (4 - Very Good)</option>
+                    <option value={3} className="bg-card text-foreground">★★★☆☆ (3 - Average)</option>
+                    <option value={2} className="bg-card text-foreground">★★☆☆☆ (2 - Poor)</option>
+                    <option value={1} className="bg-card text-foreground">★☆☆☆☆ (1 - Terrible)</option>
+                  </select>
+                </div>
+              </label>
+
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Review Comment
+                </span>
+                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                  <textarea
+                    rows={4}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Describe your stay, the room service, amenities..."
+                    required
+                    className="w-full bg-transparent text-sm outline-none text-foreground font-semibold placeholder:text-muted-foreground/60 resize-none"
+                  />
+                </div>
+              </label>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReviewModalOpen(false);
+                    setActiveReviewData(null);
+                    setRating(5);
+                    setComment("");
+                  }}
+                  className="px-4 py-2 bg-muted text-muted-foreground hover:bg-border font-semibold rounded-lg text-sm transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className="px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 font-semibold rounded-lg text-sm transition-opacity cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  {submittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

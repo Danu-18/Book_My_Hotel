@@ -7,6 +7,7 @@ import { Star } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Hotel, Room, Review } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "react-toastify";
 
 export default function HotelDetailPage() {
   const params = useParams<{ id: string }>();
@@ -71,7 +72,7 @@ export default function HotelDetailPage() {
       setShowRooms(true);
     } catch (error) {
       console.error("Failed to fetch available rooms:", error);
-      alert("Failed to check room availability. Please try again.");
+      toast.error("Failed to check room availability. Please try again.");
     }
   };
 
@@ -291,7 +292,7 @@ export default function HotelDetailPage() {
                           <span className="text-xs text-muted-foreground">/ night</span>
                         </div>
                         <p className="mt-2 text-xs text-muted-foreground">
-                          Sleeps {room.capacity} · {room.available_rooms} rooms available
+                          Sleeps {room.capacity} · {room.remaining_rooms !== undefined ? room.remaining_rooms : room.available_rooms} rooms available
                         </p>
                         {room.amenities && room.amenities.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
@@ -307,7 +308,7 @@ export default function HotelDetailPage() {
                         href={
                           user
                             ? `/book?room_id=${room.id}&check_in=${checkIn}&check_out=${checkOut}`
-                            : `/login?next=/book?room_id=${room.id}&check_in=${checkIn}&check_out=${checkOut}`
+                            : `/login?next=${encodeURIComponent(`/book?room_id=${room.id}&check_in=${checkIn}&check_out=${checkOut}`)}`
                         }
                         className="mt-4 block w-full text-center py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 text-sm"
                       >

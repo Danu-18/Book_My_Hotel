@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "react-toastify";
 
 export default function EditHotelPage() {
   const router = useRouter();
@@ -94,7 +95,7 @@ export default function EditHotelPage() {
       };
 
       await api.put(`/hotels/${hotelId}`, payload);
-      alert("Hotel updated successfully!");
+      toast.success("Hotel updated successfully!");
       router.push("/admin");
     } catch (err: unknown) {
       console.error("Failed to update hotel:", err);

@@ -25,6 +25,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<AdminTab>("analytics");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [editingRoomValues, setEditingRoomValues] = useState<Record<number, { price: number; available: number }>>({});
   const [loading, setLoading] = useState(true);
 
   // Close mobile menu on tab change
@@ -42,6 +43,8 @@ export default function AdminDashboard() {
   const [resHotelFilter, setResHotelFilter] = useState<string>("");
   const [resStatusFilter, setResStatusFilter] = useState<string>("");
   const [reservationToCancel, setReservationToCancel] = useState<number | null>(null);
+  const [hotelToDelete, setHotelToDelete] = useState<number | null>(null);
+  const [roomToDelete, setRoomToDelete] = useState<number | null>(null);
 
   // Rooms state
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -54,6 +57,7 @@ export default function AdminDashboard() {
     price_per_night: "",
     total_rooms: 1,
     available_rooms: 1,
+    image_url: "",
   });
 
   // Users state
@@ -293,7 +297,6 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteHotel = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this hotel? All rooms and reservations will be removed.")) return;
     try {
       await api.delete(`/hotels/${id}`);
       toast.success("Hotel deleted successfully!");
@@ -320,7 +323,6 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteRoom = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this room?")) return;
     try {
       await api.delete(`/rooms/${id}`);
       toast.success("Room deleted successfully!");
@@ -342,6 +344,7 @@ export default function AdminDashboard() {
         price_per_night: Number(roomForm.price_per_night),
         total_rooms: Number(roomForm.total_rooms),
         available_rooms: Number(roomForm.available_rooms),
+        image_url: roomForm.image_url,
       });
       toast.success("Room added successfully!");
       setRoomForm({
@@ -352,6 +355,7 @@ export default function AdminDashboard() {
         price_per_night: "",
         total_rooms: 1,
         available_rooms: 1,
+        image_url: "",
       });
       fetchRooms();
     } catch (e) {
@@ -600,7 +604,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="mt-4 flex space-x-2">
                       <button
-                        onClick={() => handleDeleteHotel(hotel.id)}
+                        onClick={() => setHotelToDelete(hotel.id)}
                         className="px-3 py-1.5 text-xs font-semibold bg-destructive/10 text-destructive rounded-md hover:bg-destructive/20 transition-colors cursor-pointer"
                       >
                         Delete
@@ -715,6 +719,18 @@ export default function AdminDashboard() {
                         </div>
                       </label>
                     </div>
+                    <label className="block min-w-0">
+                      <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">Room Image URL</span>
+                      <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                        <input
+                          type="url"
+                          value={roomForm.image_url}
+                          onChange={(e) => setRoomForm({ ...roomForm, image_url: e.target.value })}
+                          placeholder="https://images.unsplash.com/photo-..."
+                          className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold placeholder:text-muted-foreground/60"
+                        />
+                      </div>
+                    </label>
                     <button type="submit" className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 cursor-pointer">
                       Add Room
                     </button>
@@ -743,56 +759,87 @@ export default function AdminDashboard() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/40 text-sm">
-                          {rooms.map((room) => (
-                            <tr key={room.id}>
-                              <td className="px-4 py-3">
-                                <div className="font-semibold text-foreground">{room.room_type}</div>
-                                <div className="text-xs text-muted-foreground">#{room.room_number}</div>
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <div className="inline-flex items-center gap-1 bg-background px-2 py-1 rounded-md border border-border">
-                                  <input
-                                    type="number"
-                                    defaultValue={parseFloat(room.price_per_night)}
-                                    min={0} step="0.01"
-                                    onBlur={(e) => handleUpdateRoom(room.id, Number(e.target.value), room.available_rooms, room.is_active)}
-                                    className="w-16 text-right bg-transparent outline-none text-foreground"
-                                  />
-                                  <span className="text-[0.7rem] text-muted-foreground font-semibold">AED</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <div className="inline-flex bg-background px-2 py-1 rounded-md border border-border">
-                                  <input
-                                    type="number"
-                                    defaultValue={room.available_rooms}
-                                    min={0}
-                                    onBlur={(e) => handleUpdateRoom(room.id, parseFloat(room.price_per_night), Number(e.target.value), room.is_active)}
-                                    className="w-10 text-center bg-transparent outline-none text-foreground"
-                                  />
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${room.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-                                  {room.is_active ? "Active" : "Inactive"}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-center space-x-2">
-                                <button
-                                  onClick={() => handleUpdateRoom(room.id, parseFloat(room.price_per_night), room.available_rooms, !room.is_active)}
-                                  className="text-xs text-primary hover:underline font-semibold cursor-pointer"
-                                >
-                                  {room.is_active ? "Disable" : "Enable"}
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteRoom(room.id)}
-                                  className="text-xs text-red-600 hover:underline font-semibold cursor-pointer"
-                                >
-                                  Delete
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
+                          {rooms.map((room) => {
+                            const currentVal = editingRoomValues[room.id] || {
+                              price: parseFloat(room.price_per_night),
+                              available: room.available_rooms,
+                            };
+                            return (
+                              <tr key={room.id}>
+                                <td className="px-4 py-3">
+                                  <div className="font-semibold text-foreground">{room.room_type}</div>
+                                  <div className="text-xs text-muted-foreground">#{room.room_number}</div>
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  <div className="inline-flex items-center gap-1 bg-background px-2 py-1 rounded-md border border-border">
+                                    <input
+                                      type="number"
+                                      value={currentVal.price}
+                                      min={0}
+                                      step="0.01"
+                                      onChange={(e) =>
+                                        setEditingRoomValues({
+                                          ...editingRoomValues,
+                                          [room.id]: {
+                                            ...currentVal,
+                                            price: Number(e.target.value),
+                                          },
+                                        })
+                                      }
+                                      className="w-16 text-right bg-transparent outline-none text-foreground"
+                                    />
+                                    <span className="text-[0.7rem] text-muted-foreground font-semibold">AED</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  <div className="inline-flex bg-background px-2 py-1 rounded-md border border-border">
+                                    <input
+                                      type="number"
+                                      value={currentVal.available}
+                                      min={0}
+                                      onChange={(e) =>
+                                        setEditingRoomValues({
+                                          ...editingRoomValues,
+                                          [room.id]: {
+                                            ...currentVal,
+                                            available: Number(e.target.value),
+                                          },
+                                        })
+                                      }
+                                      className="w-10 text-center bg-transparent outline-none text-foreground"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${room.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                                    {room.is_active ? "Active" : "Inactive"}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <button
+                                      onClick={() => handleUpdateRoom(room.id, currentVal.price, currentVal.available, room.is_active)}
+                                      className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 text-[0.7rem] font-bold rounded-md transition-colors cursor-pointer shadow-sm"
+                                    >
+                                      Update
+                                    </button>
+                                    <button
+                                      onClick={() => handleUpdateRoom(room.id, parseFloat(room.price_per_night), room.available_rooms, !room.is_active)}
+                                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-[0.7rem] font-semibold rounded-md transition-colors cursor-pointer shadow-sm"
+                                    >
+                                      {room.is_active ? "Disable" : "Enable"}
+                                    </button>
+                                    <button
+                                      onClick={() => setRoomToDelete(room.id)}
+                                      className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white text-[0.7rem] font-bold rounded-md transition-colors cursor-pointer shadow-sm"
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -1239,6 +1286,66 @@ export default function AdminDashboard() {
                   className="px-4 py-2 bg-red-600 text-white hover:opacity-90 font-semibold rounded-lg text-sm transition-opacity cursor-pointer shadow-md"
                 >
                   Yes, Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Hotel Delete Confirmation Modal ─── */}
+        {hotelToDelete !== null && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-6 max-w-md w-full mx-4 space-y-4 text-left">
+              <h3 className="text-lg font-bold text-foreground font-display">Delete Hotel?</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Are you sure you want to delete this hotel? All rooms and reservations will be removed. This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setHotelToDelete(null)}
+                  className="px-4 py-2 bg-muted text-muted-foreground hover:bg-border font-semibold rounded-lg text-sm transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const id = hotelToDelete;
+                    setHotelToDelete(null);
+                    handleDeleteHotel(id);
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white hover:opacity-90 font-semibold rounded-lg text-sm transition-opacity cursor-pointer shadow-md"
+                >
+                  Yes, Delete Hotel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Room Delete Confirmation Modal ─── */}
+        {roomToDelete !== null && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-6 max-w-md w-full mx-4 space-y-4 text-left">
+              <h3 className="text-lg font-bold text-foreground font-display">Delete Room?</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Are you sure you want to delete this room? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setRoomToDelete(null)}
+                  className="px-4 py-2 bg-muted text-muted-foreground hover:bg-border font-semibold rounded-lg text-sm transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const id = roomToDelete;
+                    setRoomToDelete(null);
+                    handleDeleteRoom(id);
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white hover:opacity-90 font-semibold rounded-lg text-sm transition-opacity cursor-pointer shadow-md"
+                >
+                  Yes, Delete Room
                 </button>
               </div>
             </div>
