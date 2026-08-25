@@ -19,6 +19,7 @@ class Review extends Model
     protected $fillable = [
         'user_id',
         'hotel_id',
+        'room_id',
         'rating',
         'comment',
     ];
@@ -49,5 +50,13 @@ class Review extends Model
     public function hotel(): BelongsTo
     {
         return $this->belongsTo(Hotel::class);
+    }
+
+    /**
+     * Get the room that the review is for.
+     */
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(Room::class);
     }
 }

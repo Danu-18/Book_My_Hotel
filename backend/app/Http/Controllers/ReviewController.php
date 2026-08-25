@@ -71,6 +71,7 @@ class ReviewController extends Controller
         $review = Review::create([
             'user_id' => $request->user()->id,
             'hotel_id' => $validated['hotel_id'],
+            'room_id' => $validated['room_id'],
             'rating' => $validated['rating'],
             'comment' => $validated['comment'] ?? null,
         ]);

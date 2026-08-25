@@ -50,9 +50,16 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        $userExists = User::where('email', $credentials['email'])->exists();
+        if (!$userExists) {
+            return response()->json([
+                'message' => 'Account does not exist.',
+            ], 404);
+        }
+
         if (! Auth::attempt($credentials)) {
             return response()->json([
-                'message' => 'The provided credentials do not match our records.',
+                'message' => 'Invalid credentials.',
             ], 401);
         }
 

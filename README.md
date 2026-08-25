@@ -1,212 +1,165 @@
-# BookMyHotel.com
+# BookMyHotel Enterprise Booking System
 
-BookMyHotel.com is an enterprise-grade hotel booking platform that centralises room reservations for four luxury hotel chains (Marriott, Hilton, Hyatt, and Four Seasons) into a single customer-facing e-commerce application.
-
-Built using a **hybrid Client-Server + MVC architecture** with a **Next.js (React)** frontend consuming a **Laravel (PHP)** REST API backend with a **MySQL** database, and **Stripe** for secure payments.
+BookMyHotel is an enterprise-grade multi-tenant hotel room reservation and management application. It features a responsive Next.js frontend styled with Tailwind CSS, backed by a robust Laravel API handler.
 
 ---
 
-## Architecture
-
-```
-┌─────────────────┐         REST API          ┌──────────────────┐         MySQL
-│   Next.js 16    │  ───────────────────────► │     Laravel 12   │  ────►  Database
-│   (React 19)    │  ◄─────────────────────── │    (MVC Server)  │  ◄────
-│    Tailwind     │      JSON Responses       │     Sanctum      │
-│   Stripe.js     │                           │   Stripe SDK     │
-└─────────────────┘                           └──────────────────┘
-```
-
-- **Frontend:** Next.js 16 (App Router) + React 19 + Tailwind CSS v4
-- **Backend:** Laravel 12 (PHP 8.2+) with Sanctum authentication
-- **Database:** MySQL 8+
-- **Payments:** Stripe (Test Mode)
-
-## Project Structure
-
-```
-BookMyHotel/
-├── backend/          # Laravel REST API
-│   ├── app/
-│   │   ├── Http/
-│   │   │   ├── Controllers/    # 8 RESTful controllers
-│   │   │   └── Middleware/     # CheckRole middleware
-│   │   └── Models/             # 8 Eloquent models
-│   ├── config/                 # Laravel configuration
-│   ├── database/
-│   │   ├── migrations/         # 11 migration files
-│   │   └── seeders/            # Database seeder
-│   └── routes/
-│       └── api.php             # 36 API routes
-├── frontend/         # Next.js client
-│   ├── app/                    # App Router pages
-│   ├── components/             # Navbar & Footer
-│   ├── lib/                    # API client, auth, types
-│   └── public/                 # Static assets
-├── Implementation/   # Milestone documentation
-└── README.md
-```
-
 ## Prerequisites
 
-- **PHP 8.2+** with Composer
-- **Node.js 20+** with npm
-- **MySQL 8+**
-- **Stripe Account** (Test Mode keys)
+Before starting the setup, ensure you have the following installed on your machine:
+*   **PHP** 8.2 or higher
+*   **Composer** (PHP dependency manager)
+*   **Node.js** v18 or higher & **npm**
+*   **MySQL** or another compatible relational database engine
 
-## Installation
+---
 
-### 1. Clone & Install Dependencies
+## Database Setup
 
-```bash
-# Backend
-cd backend
-composer install
+You can set up the database using either of the following two methods:
 
-# Frontend
-cd ../frontend
-npm install
-```
+### Option A: Import Pre-seeded SQL Dump (Recommended)
+A pre-seeded MySQL dump is provided in the repository with all evaluation dummy records.
+1. Create a fresh MySQL database on your local server:
+   ```sql
+   CREATE DATABASE book_my_hotel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+2. Import the SQL file `Database/book_my_hotel.sql` into your database:
+   ```bash
+   mysql -u your_database_username -p book_my_hotel < Database/book_my_hotel.sql
+   ```
 
-### 2. Configure Environment
+### Option B: Fresh Migration and Seeding
+1. Create a fresh MySQL database on your local server:
+   ```sql
+   CREATE DATABASE book_my_hotel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+2. Run database migrations and seeders manually (see Step 7 in the Backend Setup below).
 
-**Backend** (`backend/.env`):
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=bookmyhotel
-DB_USERNAME=root
-DB_PASSWORD=
+---
 
-STRIPE_KEY=pk_test_xxx
-STRIPE_SECRET=sk_test_xxx
-```
+## Backend Setup (Laravel)
 
-**Frontend** (`frontend/.env.local`):
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
-NEXT_PUBLIC_STRIPE_KEY=pk_test_xxx
-```
+1. Open your terminal and navigate into the `backend/` directory:
+   ```bash
+   cd backend
+   ```
 
-### 3. Run Migrations & Seed Database
+2. Install PHP package dependencies:
+   ```bash
+   composer install
+   ```
 
-```bash
-cd backend
-php artisan migrate:fresh --seed
-```
+3. Duplicate the template environment file to create your active configurations:
+   ```bash
+   copy .env.example .env
+   ```
+   *(On Unix/macOS systems, use `cp .env.example .env`)*
 
-This creates the database tables and seeds:
-- **4 hotels** (Marriott, Hilton, Hyatt, Four Seasons)
-- **16 rooms** (4 room types per hotel)
-- **4 promotions**
-- **3 users**: admin, staff, customer
-- **1 confirmed reservation** with payment and review
+4. Open the newly created `.env` file in your text editor and update your database credentials to match your local setup:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=book_my_hotel
+   DB_USERNAME=your_database_username
+   DB_PASSWORD=your_database_password
+   ```
 
-### 4. Start the Development Servers
+5. Update the Stripe payment keys in the `.env` file to support reservation processing:
+   ```env
+   STRIPE_KEY=pk_test_51NgD1iSDR6VREqL3iOQ4...
+   STRIPE_SECRET=sk_test_51NgD1iSDR6VREqL3O...
+   ```
 
-**Terminal 1 - Backend (port 8000):**
-```bash
-cd backend
-php artisan serve
-```
+6. Generate the application encryption key:
+   ```bash
+   php artisan key:generate
+   ```
 
-**Terminal 2 - Frontend (port 3000):**
-```bash
-cd frontend
-npm run dev
-```
+7. (Optional - Only if you selected Option B in Database Setup) Run database migrations and seeders manually to populate tables:
+   ```bash
+   php artisan migrate:fresh --seed
+   ```
 
-Visit `http://localhost:3000`
+8. Launch the Laravel development server:
+   ```bash
+   php artisan serve
+   ```
+   *The backend API will be served at `http://127.0.0.1:8000`.*
 
-## Demo Accounts
+---
 
-| Role | Email | Password |
-|------|-------|----------|
-| **Admin** | `admin@bookmyhotel.com` | `password123` |
-| **Hotel Staff** | `staff@bookmyhotel.com` | `password123` |
-| **Customer** | `customer@bookmyhotel.com` | `password123` |
+## Frontend Setup (Next.js)
 
-## Features
+1. In a new terminal tab/window, navigate into the `frontend/` directory:
+   ```bash
+   cd frontend
+   ```
 
-### Customer
-- 🔍 **Search & Filter** - Search hotels by city, chain, price, room type, dates
-- 🏨 **Hotel Browsing** - Browse hotels with room availability & reviews
-- 💳 **Secure Booking** - Book rooms with Stripe card payment
-- 📅 **Manage Bookings** - View, cancel, and track reservation status
-- ⭐ **Guest Reviews** - Read and submit hotel reviews
-- 📞 **Contact Form** - Reach BookMyHotel support directly
+2. Install Node.js package dependencies:
+   ```bash
+   npm install
+   ```
 
-### Hotel Staff
-- 🛏️ **Room Management** - Add rooms, update prices & availability
-- 📋 **Daily Bookings** - View reservations for specific dates
-- 🏷️ **Promotions** - Create discount offers with promo codes
+3. Duplicate the template environment file to configure frontend endpoints:
+   ```bash
+   copy .env.example .env.local
+   ```
+   *(On Unix/macOS systems, use `cp .env.example .env.local`)*
 
-### Admin
-- 📊 **Analytics Dashboard** - Room nights, revenue, average daily rate
-- 🏨 **Hotel Management** - Add, edit, delete hotels
-- 📋 **All Reservations** - View all bookings across hotels
-- 👥 **User Management** - View registered users
+4. Open `.env.local` and verify that the API base URL and Stripe public keys are set correctly:
+   ```env
+   NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51NgD1iSDR6VREqL3iOQ4...
+   ```
 
-## API Endpoints (36 Routes)
+5. Launch the Next.js development server:
+   ```bash
+   npm run dev
+   ```
+   *The frontend dashboard will be served at `http://localhost:3000`.*
 
-### Public
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/register` | User registration |
-| POST | `/api/login` | User login |
-| GET | `/api/hotels` | List hotels (filterable) |
-| GET | `/api/hotels/{id}` | Hotel details |
-| GET | `/api/rooms` | Search rooms |
-| GET | `/api/promotions` | Active promotions |
-| GET | `/api/reviews?hotel_id=` | Hotel reviews |
-| POST | `/api/contact` | Contact form |
+---
 
-### Authenticated (Bearer Token)
-| Method | Endpoint | Role | Description |
-|--------|----------|------|-------------|
-| POST | `/api/logout` | Auth | Logout |
-| GET | `/api/me` | Auth | Current user |
-| GET/POST | `/api/reservations` | Customer | Manage bookings |
-| POST | `/api/reservations/{id}/cancel` | Customer | Cancel booking |
-| POST | `/api/reservations/{id}/confirm` | Customer | Confirm payment |
-| POST | `/api/rooms` | Staff+ | Add room |
-| PUT | `/api/rooms/{id}` | Staff+ | Update room |
-| POST | `/api/promotions` | Staff+ | Create promotion |
-| GET | `/api/staff/reservations/by-date` | Staff | Daily view |
-| PUT/DELETE | `/api/hotels/{id}` | Admin | Manage hotels |
-| DELETE | `/api/rooms/{id}` | Admin | Delete room |
-| GET | `/api/admin/analytics` | Admin | Dashboard data |
-| GET | `/api/admin/reservations` | Admin | All bookings |
-| GET | `/api/admin/users` | Admin | User list |
-| GET | `/api/admin/contact-messages` | Admin | Contact inbox |
+## Test Credentials
 
-## Stripe Test Payment
+Use these seeded credentials to evaluate different role privileges:
 
-Use the following test card in the checkout:
-- **Card Number:** `4242 4242 4242 4242`
-- **Expiry:** Any future date
-- **CVC:** Any 3-digit number
+### 1. Global Admin Account
+*   **Role:** Administrative control over all hotels, rooms, users, and booking logs.
+*   **Email:** `admin@bookmyhotel.com`
+*   **Password:** `password123`
 
-## Documentation
+### 2. Hotel Staff / Manager Accounts
+*   **Role:** Manage rooms inventory, create promotions, and review reservations for their assigned hotel.
+*   *   **Marriott Manager:**
+        *   **Email:** `marriott@staff.com`
+        *   **Password:** `password123`
+    *   **Hilton Manager:**
+        *   **Email:** `hilton@staff.com`
+        *   **Password:** `password123`
+    *   **Hyatt Manager:**
+        *   **Email:** `hyatt@staff.com`
+        *   **Password:** `password123`
+    *   **Four Seasons Manager:**
+        *   **Email:** `fourseasons@staff.com`
+        *   **Password:** `password123`
+    *   **Generic Staff:**
+        *   **Email:** `staff@bookmyhotel.com`
+        *   **Password:** `password123`
 
-Detailed milestone documentation is available in the `Implementation/` folder:
+### 3. Customer Account
+*   **Role:** Browse hotels, apply discount promotions, add ancillary services, book rooms, checkout via Stripe, cancel bookings, and leave reviews.
+*   **Email:** `customer@bookmyhotel.com`
+*   **Password:** `password123`
 
-| File | Description |
-|------|-------------|
-| `01_database_migrations.md` | Database schema & ER diagram alignment |
-| `02_api_controllers.md` | REST API controllers & routes |
-| `03_frontend_implementation.md` | Next.js frontend implementation |
+---
 
-## Security
+## Stripe Payment Testing
 
-- ✅ **Role-based access control** (customer, staff, admin)
-- ✅ **Laravel Sanctum** token authentication
-- ✅ **Stripe PaymentIntents** - no card data stored
-- ✅ **Input validation** on all API endpoints
-- ✅ **Password hashing** with Bcrypt
-- ✅ **CORS** configured for frontend origin only
-
-## License
-
-Academic project for SWE6013 Enterprise System Development - University of Bolton.
+Use Stripe's official mock test card to simulate the booking checkout flow:
+*   **Card Number:** `4242 4242 4242 4242`
+*   **Expiration Date:** Any future date (e.g., `12/28`)
+*   **CVC:** Any 3-digit number (e.g., `242`)
+*   **ZIP/Postal Code:** Any valid code (e.g., `10001` or `90210`)
