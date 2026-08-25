@@ -61,7 +61,7 @@ A pre-seeded MySQL dump is provided in the repository with all evaluation dummy 
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
    DB_PORT=3306
-   DB_DATABASE=book_my_hotel
+   DB_DATABASE=bookmyhotel
    DB_USERNAME=your_database_username
    DB_PASSWORD=your_database_password
    ```

@@ -243,9 +243,9 @@ function PaymentForm({
             }}
           />
         </div>
-        <p className="text-xs text-muted-foreground">
-          Test Mode: Use card 4242 4242 4242 4242, any future expiry, any CVC.
-        </p>
+          {/* <p className="text-xs text-muted-foreground">
+            Test Mode: Use card 4242 4242 4242 4242, any future expiry, any CVC.
+          </p> */}
       </div>
 
       {error && (
