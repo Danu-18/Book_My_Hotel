@@ -17,6 +17,7 @@ export default function StaffDashboard() {
   const [activeTab, setActiveTab] = useState<"rooms" | "reservations" | "promotions">("rooms");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [filterDate, setFilterDate] = useState("");
+  const [editingRoomValues, setEditingRoomValues] = useState<Record<number, { price: number; available: number }>>({});
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -464,59 +465,85 @@ export default function StaffDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40 text-sm">
-                  {rooms.map((room) => (
-                    <tr key={room.id}>
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-foreground">{room.room_type}</div>
-                        <div className="text-xs text-muted-foreground">#{room.room_number}</div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="inline-flex items-center gap-1 bg-background px-2 py-1 rounded-md border border-border">
-                          <input
-                            type="number"
-                            defaultValue={parseFloat(room.price_per_night)}
-                            min={0}
-                            step="0.01"
-                            onBlur={(e) =>
-                              handleUpdateRoom(room.id, Number(e.target.value), room.available_rooms, room.is_active)
-                            }
-                            className="w-16 text-right bg-transparent outline-none text-foreground"
-                          />
-                          <span className="text-[0.7rem] text-muted-foreground font-semibold">AED</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="inline-flex bg-background px-2 py-1 rounded-md border border-border">
-                          <input
-                            type="number"
-                            defaultValue={room.available_rooms}
-                            min={0}
-                            onBlur={(e) =>
-                              handleUpdateRoom(room.id, parseFloat(room.price_per_night), Number(e.target.value), room.is_active)
-                            }
-                            className="w-10 text-center bg-transparent outline-none text-foreground"
-                          />
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span
-                          className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                            room.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {room.is_active ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => handleUpdateRoom(room.id, parseFloat(room.price_per_night), room.available_rooms, !room.is_active)}
-                          className="text-xs text-primary hover:underline font-semibold cursor-pointer"
-                        >
-                          {room.is_active ? "Disable" : "Enable"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {rooms.map((room) => {
+                    const currentVal = editingRoomValues[room.id] || {
+                      price: parseFloat(room.price_per_night),
+                      available: room.available_rooms,
+                    };
+                    return (
+                      <tr key={room.id}>
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-foreground">{room.room_type}</div>
+                          <div className="text-xs text-muted-foreground">#{room.room_number}</div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="inline-flex items-center gap-1 bg-background px-2 py-1 rounded-md border border-border">
+                            <input
+                              type="number"
+                              value={currentVal.price}
+                              min={0}
+                              step="0.01"
+                              onChange={(e) =>
+                                setEditingRoomValues({
+                                  ...editingRoomValues,
+                                  [room.id]: {
+                                    ...currentVal,
+                                    price: Number(e.target.value),
+                                  },
+                                })
+                              }
+                              className="w-16 text-right bg-transparent outline-none text-foreground"
+                            />
+                            <span className="text-[0.7rem] text-muted-foreground font-semibold">AED</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="inline-flex bg-background px-2 py-1 rounded-md border border-border">
+                            <input
+                              type="number"
+                              value={currentVal.available}
+                              min={0}
+                              onChange={(e) =>
+                                setEditingRoomValues({
+                                  ...editingRoomValues,
+                                  [room.id]: {
+                                    ...currentVal,
+                                    available: Number(e.target.value),
+                                  },
+                                })
+                              }
+                              className="w-10 text-center bg-transparent outline-none text-foreground"
+                            />
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                              room.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {room.is_active ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex items-center justify-center gap-3">
+                            <button
+                              onClick={() => handleUpdateRoom(room.id, currentVal.price, currentVal.available, room.is_active)}
+                              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 text-[0.7rem] font-bold rounded-md transition-colors cursor-pointer shadow-sm"
+                            >
+                              Update
+                            </button>
+                            <button
+                              onClick={() => handleUpdateRoom(room.id, parseFloat(room.price_per_night), room.available_rooms, !room.is_active)}
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-[0.7rem] font-semibold rounded-md transition-colors cursor-pointer shadow-sm"
+                            >
+                              {room.is_active ? "Disable" : "Enable"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
