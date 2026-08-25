@@ -31,6 +31,7 @@ export default function StaffDashboard() {
     price_per_night: "",
     total_rooms: 1,
     available_rooms: 1,
+    image_url: "",
   });
 
   // Promotion form state
@@ -129,6 +130,7 @@ export default function StaffDashboard() {
         price_per_night: "",
         total_rooms: 1,
         available_rooms: 1,
+        image_url: "",
       });
       fetchData();
     } catch (error) {
@@ -438,6 +440,21 @@ export default function StaffDashboard() {
                   </div>
                 </label>
               </div>
+
+              <label className="block min-w-0">
+                <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Room Image URL
+                </span>
+                <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                  <input
+                    type="url"
+                    value={roomForm.image_url}
+                    onChange={(e) => setRoomForm({ ...roomForm, image_url: e.target.value })}
+                    placeholder="https://images.unsplash.com/photo-..."
+                    className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold placeholder:text-muted-foreground/60"
+                  />
+                </div>
+              </label>
 
               <button
                 type="submit"

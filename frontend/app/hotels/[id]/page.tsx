@@ -7,6 +7,7 @@ import { Star } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Hotel, Room, Review } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "react-toastify";
 
 export default function HotelDetailPage() {
   const params = useParams<{ id: string }>();
@@ -71,7 +72,7 @@ export default function HotelDetailPage() {
       setShowRooms(true);
     } catch (error) {
       console.error("Failed to fetch available rooms:", error);
-      alert("Failed to check room availability. Please try again.");
+      toast.error("Failed to check room availability. Please try again.");
     }
   };
 

@@ -43,6 +43,8 @@ export default function AdminDashboard() {
   const [resHotelFilter, setResHotelFilter] = useState<string>("");
   const [resStatusFilter, setResStatusFilter] = useState<string>("");
   const [reservationToCancel, setReservationToCancel] = useState<number | null>(null);
+  const [hotelToDelete, setHotelToDelete] = useState<number | null>(null);
+  const [roomToDelete, setRoomToDelete] = useState<number | null>(null);
 
   // Rooms state
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -55,6 +57,7 @@ export default function AdminDashboard() {
     price_per_night: "",
     total_rooms: 1,
     available_rooms: 1,
+    image_url: "",
   });
 
   // Users state
@@ -294,7 +297,6 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteHotel = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this hotel? All rooms and reservations will be removed.")) return;
     try {
       await api.delete(`/hotels/${id}`);
       toast.success("Hotel deleted successfully!");
@@ -321,7 +323,6 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteRoom = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this room?")) return;
     try {
       await api.delete(`/rooms/${id}`);
       toast.success("Room deleted successfully!");
@@ -343,6 +344,7 @@ export default function AdminDashboard() {
         price_per_night: Number(roomForm.price_per_night),
         total_rooms: Number(roomForm.total_rooms),
         available_rooms: Number(roomForm.available_rooms),
+        image_url: roomForm.image_url,
       });
       toast.success("Room added successfully!");
       setRoomForm({
@@ -353,6 +355,7 @@ export default function AdminDashboard() {
         price_per_night: "",
         total_rooms: 1,
         available_rooms: 1,
+        image_url: "",
       });
       fetchRooms();
     } catch (e) {
@@ -601,7 +604,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="mt-4 flex space-x-2">
                       <button
-                        onClick={() => handleDeleteHotel(hotel.id)}
+                        onClick={() => setHotelToDelete(hotel.id)}
                         className="px-3 py-1.5 text-xs font-semibold bg-destructive/10 text-destructive rounded-md hover:bg-destructive/20 transition-colors cursor-pointer"
                       >
                         Delete
@@ -716,6 +719,18 @@ export default function AdminDashboard() {
                         </div>
                       </label>
                     </div>
+                    <label className="block min-w-0">
+                      <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-widest">Room Image URL</span>
+                      <div className="mt-1 rounded-lg bg-background px-3 py-2.5 ring-1 ring-border">
+                        <input
+                          type="url"
+                          value={roomForm.image_url}
+                          onChange={(e) => setRoomForm({ ...roomForm, image_url: e.target.value })}
+                          placeholder="https://images.unsplash.com/photo-..."
+                          className="w-full min-w-0 bg-transparent text-sm outline-none text-foreground font-semibold placeholder:text-muted-foreground/60"
+                        />
+                      </div>
+                    </label>
                     <button type="submit" className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 cursor-pointer">
                       Add Room
                     </button>
@@ -815,7 +830,7 @@ export default function AdminDashboard() {
                                       {room.is_active ? "Disable" : "Enable"}
                                     </button>
                                     <button
-                                      onClick={() => handleDeleteRoom(room.id)}
+                                      onClick={() => setRoomToDelete(room.id)}
                                       className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white text-[0.7rem] font-bold rounded-md transition-colors cursor-pointer shadow-sm"
                                     >
                                       Delete
@@ -1271,6 +1286,66 @@ export default function AdminDashboard() {
                   className="px-4 py-2 bg-red-600 text-white hover:opacity-90 font-semibold rounded-lg text-sm transition-opacity cursor-pointer shadow-md"
                 >
                   Yes, Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Hotel Delete Confirmation Modal ─── */}
+        {hotelToDelete !== null && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-6 max-w-md w-full mx-4 space-y-4 text-left">
+              <h3 className="text-lg font-bold text-foreground font-display">Delete Hotel?</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Are you sure you want to delete this hotel? All rooms and reservations will be removed. This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setHotelToDelete(null)}
+                  className="px-4 py-2 bg-muted text-muted-foreground hover:bg-border font-semibold rounded-lg text-sm transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const id = hotelToDelete;
+                    setHotelToDelete(null);
+                    handleDeleteHotel(id);
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white hover:opacity-90 font-semibold rounded-lg text-sm transition-opacity cursor-pointer shadow-md"
+                >
+                  Yes, Delete Hotel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Room Delete Confirmation Modal ─── */}
+        {roomToDelete !== null && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-card rounded-2xl shadow-xl ring-1 ring-border/50 p-6 max-w-md w-full mx-4 space-y-4 text-left">
+              <h3 className="text-lg font-bold text-foreground font-display">Delete Room?</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Are you sure you want to delete this room? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setRoomToDelete(null)}
+                  className="px-4 py-2 bg-muted text-muted-foreground hover:bg-border font-semibold rounded-lg text-sm transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const id = roomToDelete;
+                    setRoomToDelete(null);
+                    handleDeleteRoom(id);
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white hover:opacity-90 font-semibold rounded-lg text-sm transition-opacity cursor-pointer shadow-md"
+                >
+                  Yes, Delete Room
                 </button>
               </div>
             </div>
