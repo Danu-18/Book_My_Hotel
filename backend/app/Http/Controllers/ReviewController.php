@@ -32,11 +32,32 @@ class ReviewController extends Controller
     {
         $validated = $request->validate([
             'hotel_id' => ['required', 'exists:hotels,id'],
+            'room_id' => ['required', 'exists:rooms,id'],
+            'reservation_id' => ['required', 'exists:reservations,id'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        // Prevent duplicate reviews
+        // Verify the user actually stayed in that specific room and hotel
+        $reservation = \App\Models\Reservation::with('room')->where('id', $validated['reservation_id'])
+            ->where('user_id', $request->user()->id)
+            ->where('room_id', $validated['room_id'])
+            ->where('status', 'completed')
+            ->first();
+
+        if (!$reservation) {
+            return response()->json([
+                'message' => 'You can only review rooms from your own completed bookings.',
+            ], 403);
+        }
+
+        if ($reservation->room->hotel_id != $validated['hotel_id']) {
+            return response()->json([
+                'message' => 'The selected room does not belong to the selected hotel.',
+            ], 422);
+        }
+
+        // Prevent duplicate reviews for the same hotel
         $existing = Review::where('user_id', $request->user()->id)
             ->where('hotel_id', $validated['hotel_id'])
             ->exists();
