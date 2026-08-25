@@ -118,7 +118,7 @@ function LoginPageContent() {
           </div>
 
           {/* Demo credentials */}
-          <div className="mt-8 border-t border-border/60 pt-6">
+          {/* <div className="mt-8 border-t border-border/60 pt-6">
             <p className="text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest mb-3">Demo Accounts</p>
             <div className="space-y-2 text-xs text-muted-foreground">
               <div className="bg-background rounded-lg border border-border p-3 text-xs leading-relaxed">
@@ -128,7 +128,7 @@ function LoginPageContent() {
                 <div><strong className="text-foreground">Password:</strong> password123</div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </main>
