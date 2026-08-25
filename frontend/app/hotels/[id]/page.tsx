@@ -307,7 +307,7 @@ export default function HotelDetailPage() {
                         href={
                           user
                             ? `/book?room_id=${room.id}&check_in=${checkIn}&check_out=${checkOut}`
-                            : `/login?next=/book?room_id=${room.id}&check_in=${checkIn}&check_out=${checkOut}`
+                            : `/login?next=${encodeURIComponent(`/book?room_id=${room.id}&check_in=${checkIn}&check_out=${checkOut}`)}`
                         }
                         className="mt-4 block w-full text-center py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md transition-opacity hover:opacity-90 text-sm"
                       >

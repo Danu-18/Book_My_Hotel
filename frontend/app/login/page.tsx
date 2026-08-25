@@ -17,6 +17,14 @@ function LoginPageContent() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (next && next.startsWith("/book")) {
+      toast.warn("Please login first to book a room.", {
+        toastId: "login-to-book",
+      });
+    }
+  }, [next]);
+
+  useEffect(() => {
     if (!authLoading && user) {
       if (user.role === "admin") {
         router.push("/admin");

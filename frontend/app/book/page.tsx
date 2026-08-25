@@ -37,7 +37,7 @@ function BookPageContent() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push(`/login?next=/book?room_id=${roomId}&check_in=${checkInParam}&check_out=${checkOutParam}`);
+      router.push(`/login?next=${encodeURIComponent(`/book?room_id=${roomId}&check_in=${checkInParam}&check_out=${checkOutParam}`)}`);
       return;
     }
 
