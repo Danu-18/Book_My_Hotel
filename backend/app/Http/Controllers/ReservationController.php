@@ -87,7 +87,7 @@ class ReservationController extends Controller
             'services.*.quantity' => ['required_with:services', 'integer', 'min:1'],
         ]);
 
-        $room = Room::findOrFail($validated['room_id']);
+        $room = Room::with('hotel')->findOrFail($validated['room_id']);
 
         if ($request->user()->role === 'staff' && $room->hotel_id !== $request->user()->hotel_id) {
             return response()->json(['message' => 'Unauthorized.'], 403);
@@ -125,7 +125,18 @@ class ReservationController extends Controller
 
         // Apply promo code if provided
         if ($request->filled('promo_code')) {
-            $today = Carbon::today()->toDateString();
+            $timezone = 'UTC';
+            if ($room->hotel) {
+                $city = strtolower($room->hotel->city);
+                if ($city === 'dubai' || $city === 'abu dhabi') {
+                    $timezone = 'Asia/Dubai';
+                } elseif ($city === 'istanbul') {
+                    $timezone = 'Europe/Istanbul';
+                } elseif ($city === 'london') {
+                    $timezone = 'Europe/London';
+                }
+            }
+            $today = Carbon::today($timezone)->toDateString();
             $promotion = \App\Models\Promotion::where('code', $request->input('promo_code'))
                 ->where('hotel_id', $room->hotel_id)
                 ->where('is_active', true)

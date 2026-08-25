@@ -155,7 +155,8 @@ class PromotionController extends Controller
         $code = $request->input('code');
         $hotelId = $request->input('hotel_id');
 
-        $promotion = Promotion::where('code', $code)
+        $promotion = Promotion::with('hotel')
+            ->where('code', $code)
             ->where('hotel_id', $hotelId)
             ->first();
 
@@ -173,15 +174,31 @@ class PromotionController extends Controller
             ]);
         }
 
-        $today = Carbon::today()->toDateString();
-        if ($promotion->start_date > $today) {
+        // Resolve timezone based on the hotel city
+        $timezone = 'UTC';
+        if ($promotion->hotel) {
+            $city = strtolower($promotion->hotel->city);
+            if ($city === 'dubai' || $city === 'abu dhabi') {
+                $timezone = 'Asia/Dubai';
+            } elseif ($city === 'istanbul') {
+                $timezone = 'Europe/Istanbul';
+            } elseif ($city === 'london') {
+                $timezone = 'Europe/London';
+            }
+        }
+
+        $today = Carbon::today($timezone)->toDateString();
+        $startDateStr = $promotion->start_date->toDateString();
+        $endDateStr = $promotion->end_date->toDateString();
+
+        if ($startDateStr > $today) {
             return response()->json([
                 'status' => 'not_started',
                 'message' => 'Promo code is not active yet.'
             ]);
         }
 
-        if ($promotion->end_date < $today) {
+        if ($endDateStr < $today) {
             return response()->json([
                 'status' => 'expired',
                 'message' => 'Promo code has expired.'
